@@ -1,8 +1,7 @@
 {
 	"name": "Ordo",
-	"version": "0.3.2",
+	"version": "0.3.3",
 	"minAppVersion": "1.13.0",
-	"description": "Minimalist theme for Obsidian",
 	"author": "Lenin",
 	"authorUrl": "https://github.com/LubrieDev"
 }

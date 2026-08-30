@@ -1365,7 +1365,6 @@ body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters .cm-gutter:bef
 .cm-editor .cm-hmd-internal-link:hover {
   color: var(--link-color-hover);
   text-decoration: underline;
-  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
 
