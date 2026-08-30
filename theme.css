@@ -353,8 +353,8 @@ body {
   --titlebar-background: var(--ordo-c-bg-base);
   --titlebar-background-focused: var(--ordo-c-bg-surface);
   --titlebar-text-color-focused: var(--ordo-c-text-1);
-  --divider-color: var(--ordo-c-border-rest);
-  --frame-divider-color: var(--ordo-c-border-rest);
+  --divider-color: transparent;
+  --frame-divider-color: transparent;
   --tab-outline-color: transparent;
   --workspace-background-translucent: hsl(var(--ordo-h), var(--ordo-s), var(--ordo-l) / 0.85);
 
@@ -641,24 +641,23 @@ body {
   background: var(--ordo-c-bg-base);
 }
 
-/* Divisor entre paneles */
+/* Divisor entre paneles — oculto en reposo (sin !important).
+   El handle queda siempre interactivo para redimensionar; el
+   divisor se muestra únicamente al pasar el cursor. */
 .workspace-leaf-resize-handle,
 .workspace-sidedock-resize-handle {
   background: none;
   border: none;
   box-shadow: none;
   opacity: 0;
-  transition: none;
+  transition: background-color var(--ordo-duration-fast) var(--ordo-ease);
 }
 
-.workspace-leaf-resize-handle::after,
-.workspace-sidedock-resize-handle::after {
-  visibility: hidden;
-}
-
-.workspace-leaf-resize-handle:hover::after,
-.workspace-sidedock-resize-handle:hover::after {
-  visibility: visible;
+.workspace-leaf-resize-handle:hover,
+.workspace-sidedock-resize-handle:hover {
+  --divider-color: var(--ordo-c-border-rest);
+  --frame-divider-color: var(--ordo-c-border-rest);
+  opacity: 1;
 }
 
 .workspace-split.mod-vertical > .workspace-leaf > .workspace-leaf-resize-handle,
@@ -670,63 +669,6 @@ body {
 .workspace-split.mod-horizontal > .workspace-leaf > .workspace-leaf-resize-handle {
   height: 12px;
   bottom: -6px;
-}
-
-.workspace-split.mod-vertical > .workspace-leaf > .workspace-leaf-resize-handle::after,
-.workspace-sidedock-resize-handle::after {
-  content: '';
-  position: absolute;
-  top: 14px;
-  bottom: 14px;
-  left: 50%;
-  width: 2px;
-  transform: translateX(-50%);
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--ordo-divider) 18%,
-    var(--ordo-divider) 82%,
-    transparent
-  );
-  transition: var(--ordo-transition);
-}
-
-.workspace-split.mod-horizontal > .workspace-leaf > .workspace-leaf-resize-handle::after {
-  top: 50%;
-  bottom: auto;
-  left: 14px;
-  right: 14px;
-  width: auto;
-  height: 2px;
-  transform: translateY(-50%);
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--ordo-divider) 18%,
-    var(--ordo-divider) 82%,
-    transparent
-  );
-}
-
-.workspace-split.mod-vertical > .workspace-leaf > .workspace-leaf-resize-handle:hover::after,
-.workspace-sidedock-resize-handle:hover::after {
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--ordo-divider-hover) 18%,
-    var(--ordo-divider-hover) 82%,
-    transparent
-  );
-}
-
-.workspace-split.mod-horizontal > .workspace-leaf > .workspace-leaf-resize-handle:hover::after {
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--ordo-divider-hover) 18%,
-    var(--ordo-divider-hover) 82%,
-    transparent
-  );
 }
 
 /* REPOSO */
