@@ -1,0 +1,2 @@
+# ordo
+Theme for Obsidian
