@@ -226,9 +226,12 @@ body {
   --ordo-c-image-dim: var(--ordo-image-dim);
 }
 
-/* --- Light mode tokens --- */
+/* --- Light mode tokens ---
+   Light interface stays inside the gray scale: intermediate light
+   values, neither near-white nor dark, so there is no pure #fff
+   surface and the identity ("no pure black or white") holds. */
 .theme-light {
-  --ordo-l-light: 90.5%;
+  --ordo-l-light: 74%;
 
   --ordo-bg-0: hsl(var(--ordo-h), var(--ordo-s), var(--ordo-l-light));
   --ordo-bg-1: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) + 5%));
@@ -237,9 +240,9 @@ body {
   --ordo-border-rest: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 6.5%));
   --ordo-border-focus: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 35%));
 
-  --ordo-text-1: hsl(var(--ordo-h), calc(var(--ordo-s) * 2 + 2%), calc(var(--ordo-l-light) - 72%));
-  --ordo-text-2: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 48%));
-  --ordo-text-3: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 33%));
+  --ordo-text-1: hsl(var(--ordo-h), calc(var(--ordo-s) * 2 + 2%), calc(var(--ordo-l-light) - 70%));
+  --ordo-text-2: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 46%));
+  --ordo-text-3: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 31%));
 
   --ordo-accent: hsl(var(--ordo-h), calc(var(--ordo-s) + 0.5%), calc(var(--ordo-l-light) - 35%));
   --ordo-accent-hover: hsl(var(--ordo-h), calc(var(--ordo-s) + 0.5%), calc(var(--ordo-l-light) - 30%));
@@ -644,13 +647,13 @@ body {
   background: none;
   border: none;
   box-shadow: none;
-  opacity: 0;
+  opacity: 0 !important;
   transition: none;
 }
 
 .workspace-leaf-resize-handle:hover,
 .workspace-sidedock-resize-handle:hover {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .workspace-leaf-resize-handle::after,
