@@ -647,13 +647,8 @@ body {
   background: none;
   border: none;
   box-shadow: none;
-  opacity: 0 !important;
+  opacity: 0;
   transition: none;
-}
-
-.workspace-leaf-resize-handle:hover,
-.workspace-sidedock-resize-handle:hover {
-  opacity: 1 !important;
 }
 
 .workspace-leaf-resize-handle::after,
@@ -1430,7 +1425,6 @@ body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters .cm-gutter:bef
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
-  text-decoration-color: var(--ordo-c-border-focus);
 }
 
 .external-link {
