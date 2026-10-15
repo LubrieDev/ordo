@@ -1,8 +1,8 @@
 /* ============================================================
    ORDO TEST — Sistema de tokens completo
    Basado en la identidad Ordo: grises sin negro/blanco puro,
-   profundidad por sombras suaves + radio. Contenido atenuado
-   en reposo, foco eleva borde + brillo al 100%.
+   profundidad por sombras suaves + radio. Fondos uniformes,
+   foco realza el borde y la sombra sin atenuar el panel.
 
    Arquitectura:
     1. Tokens base         — fuente HSL, escala de grises, paleta
@@ -48,9 +48,12 @@ body {
   --ordo-text-2: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 56%));
   --ordo-text-3: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 37%));
 
-  /* --- Acento monocromo (identidad Ordo: sin color) --- */
-  --ordo-accent: hsl(var(--ordo-h), calc(var(--ordo-s) + 0.5%), calc(var(--ordo-l) + 13.5%));
-  --ordo-accent-hover: hsl(var(--ordo-h), calc(var(--ordo-s) + 0.5%), calc(var(--ordo-l) + 18.5%));
+  /* --- Acento predeterminado #73645F; personalizable desde Obsidian --- */
+  --accent-h: 15;
+  --accent-s: 9.52381%;
+  --accent-l: 41.176471%;
+  --ordo-accent: var(--color-accent);
+  --ordo-accent-hover: var(--color-accent-1);
 
   /* --- Paleta extendida silenciada --- */
   --ordo-red: #c98181;
@@ -63,8 +66,6 @@ body {
   --ordo-pink: #bd84a5;
 
   /* --- Tokens de atenuación --- */
-  --ordo-dim: 0.92;
-  --ordo-dim-text: 0.72;
   --ordo-image-dim: 0.78;
 }
 
@@ -130,25 +131,26 @@ body {
     color var(--ordo-duration-normal) var(--ordo-ease);
 
   /* --- Tipografía --- */
-  --ordo-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Ubuntu, sans-serif;
+  --ordo-font-ui: var(--font-default);
   --ordo-font-text: var(--ordo-font-ui);
-  --ordo-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --ordo-font-mono: var(--font-monospace-default);
   --ordo-font-size-xs: 11px;
   --ordo-font-size-s: 12px;
   --ordo-font-size-m: 13px;
   --ordo-font-size-l: 15px;
   --ordo-font-size-xl: 20px;
   --ordo-font-size-2xl: 28px;
-  --ordo-line-height: 1.6;
-  --ordo-line-height-tight: 1.4;
-  --ordo-heading-spacing: 1.75rem;
-  --ordo-p-spacing: 1.5rem;
-  --ordo-list-spacing: 0.125em;
+  --ordo-line-height: 1.5;
+  --ordo-line-height-tight: 1.3;
+  --ordo-heading-spacing: calc(var(--ordo-p-spacing) * 2.5);
+  --ordo-p-spacing: 1rem;
+  --ordo-list-spacing: 0.075em;
 
   /* --- Ancho de línea --- */
-  --ordo-line-width: 40rem;
-  --ordo-line-width-wide: calc(var(--ordo-line-width) + 12.5%);
-  --ordo-max-width: 88%;
+  --ordo-line-width: 700px;
+  --ordo-line-width-wide: calc(var(--ordo-line-width) * 1.125);
+  --ordo-max-width: 100%;
+  --ordo-width-scale: 1;
 
   /* --- Z-index --- */
   --ordo-z-cover: 5;
@@ -163,7 +165,7 @@ body {
   --ordo-z-dragged: 80;
 
   /* --- Borde --- */
-  --ordo-border-width: 1px;
+  --ordo-border-width: 2px;
 
   /* --- Interlineado de código --- */
   --ordo-code-line-height: 1.6;
@@ -176,7 +178,6 @@ body {
   --font-adaptive-smaller: var(--font-ui-small, 13px);
   --font-adaptive-smallest: var(--font-ui-smaller, 11px);
   --font-code: calc(var(--font-adaptive-normal) * 0.875);
-  --table-text-size: calc(var(--font-adaptive-normal) * 0.875);
 }
 
 /* ============================================================
@@ -244,9 +245,6 @@ body {
   --ordo-text-2: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 46%));
   --ordo-text-3: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 31%));
 
-  --ordo-accent: hsl(var(--ordo-h), calc(var(--ordo-s) + 0.5%), calc(var(--ordo-l-light) - 35%));
-  --ordo-accent-hover: hsl(var(--ordo-h), calc(var(--ordo-s) + 0.5%), calc(var(--ordo-l-light) - 30%));
-
   --ordo-red: #a85252;
   --ordo-orange: #a86b3d;
   --ordo-yellow: #8a7526;
@@ -308,6 +306,10 @@ body {
    ============================================================ */
 
 body {
+  --font-interface-theme: var(--ordo-font-ui);
+  --font-text-theme: var(--ordo-font-text);
+  --font-monospace-theme: var(--ordo-font-mono);
+
   /* --- Fondos --- */
   --background-primary: var(--ordo-bg-1);
   --background-primary-alt: var(--ordo-bg-2);
@@ -355,7 +357,7 @@ body {
   --titlebar-text-color-focused: var(--ordo-c-text-1);
   --divider-color: transparent;
   --frame-divider-color: transparent;
-  --tab-outline-color: transparent;
+  --tab-outline-color: var(--ordo-c-border-rest);
   --workspace-background-translucent: hsl(var(--ordo-h), var(--ordo-s), var(--ordo-l) / 0.85);
 
   /* --- Navegación --- */
@@ -374,12 +376,6 @@ body {
   --nav-indentation-guide-color: var(--ordo-c-border-rest);
   --nav-collapse-icon-color: var(--ordo-c-text-3);
 
-  /* --- Tabs --- */
-  --tab-radius: var(--ordo-radius-s);
-  --tab-radius-active: var(--ordo-radius-s);
-  --tab-height: calc(var(--header-height) - 14px);
-  --tab-divider-color: transparent;
-
   /* --- Listas, citas, guías --- */
   --list-marker-color: var(--ordo-c-text-3);
   --indentation-guide-color: var(--ordo-c-border-rest);
@@ -397,7 +393,6 @@ body {
   --code-background: var(--ordo-c-bg-base);
   --code-normal: var(--ordo-c-text-1);
   --code-radius: var(--ordo-radius-s);
-  --code-size: var(--font-code);
   --code-comment: var(--ordo-c-text-3);
   --code-function: var(--ordo-blue);
   --code-keyword: var(--ordo-purple);
@@ -426,14 +421,14 @@ body {
   --tag-radius: 4px;
   --tag-background: var(--ordo-c-bg-elevated);
   --tag-background-hover: var(--ordo-c-bg-hover);
-  --tag-color: var(--ordo-c-text-2);
+  --tag-color: var(--ordo-c-text-1);
   --tag-color-hover: var(--ordo-c-text-1);
   --tag-border-color: var(--ordo-c-border-rest);
   --tag-border-color-hover: var(--ordo-c-border-focus);
-  --tag-border-width: 1px;
+  --tag-border-width: var(--ordo-border-width);
 
   /* --- Callouts --- */
-  --callout-border-width: 1px;
+  --callout-border-width: var(--ordo-border-width);
   --callout-border-opacity: 1;
   --callout-radius: var(--ordo-radius-s);
   --callout-padding: 1rem 1.25rem;
@@ -449,23 +444,9 @@ body {
   --blockquote-style: normal;
 
   /* --- Tablas --- */
-  --table-border-width: 1px;
-  --table-border-color: var(--ordo-c-border-rest);
-  --table-header-background: var(--ordo-c-bg-elevated);
-  --table-header-size: var(--table-text-size);
-  --table-header-weight: 500;
-  --table-header-border-width: 2px;
-  --table-header-border-color: var(--ordo-c-border-focus);
-  --table-row-background-hover: var(--ordo-c-bg-hover);
-  --table-row-alt-background: var(--ordo-c-bg-elevated);
-  --table-row-alt-background-hover: var(--ordo-c-bg-hover);
-  --table-row-last-border-width: 1px;
-  --table-column-first-border-width: 1px;
-  --table-column-last-border-width: 1px;
-  --table-cell-padding: 0.5rem 0.875rem;
+  /* Geometría, encabezados y filas nativos; selección en la paleta Ordo. */
   --table-selection: var(--text-selection);
   --table-selection-border-color: var(--ordo-c-border-focus);
-  --table-add-button-border-width: 0px;
 
   /* --- Formularios y menús --- */
   --modal-border-color: var(--ordo-c-border-focus);
@@ -571,49 +552,18 @@ body {
    ============================================================ */
 
 body {
-  --h1-size: 1.35em;
-  --h2-size: 1.2em;
-  --h3-size: 1.1em;
-  --h4-size: 1em;
-  --h5-size: 0.9em;
-  --h6-size: 0.85em;
-  --h1-weight: 600;
-  --h2-weight: 600;
-  --h3-weight: 500;
-  --h4-weight: 500;
-  --h5-weight: 500;
-  --h6-weight: 400;
-  --h1-variant: normal;
-  --h2-variant: normal;
-  --h3-variant: normal;
-  --h4-variant: normal;
-  --h5-variant: small-caps;
-  --h6-variant: small-caps;
-  --h1-style: normal;
-  --h2-style: normal;
-  --h3-style: normal;
-  --h4-style: normal;
-  --h5-style: normal;
-  --h6-style: normal;
-
-  --inline-title-size: 1.6em;
-  --inline-title-weight: 600;
-  --inline-title-margin-bottom: 0.75rem;
-
+  /* Encabezados y título heredan tamaños, pesos e interlineados nativos. */
   --p-spacing: var(--ordo-p-spacing);
   --heading-spacing: var(--ordo-heading-spacing);
-  --line-height: var(--ordo-line-height);
-}
-
-h1, h2, h3, h4 {
-  letter-spacing: -0.02em;
+  --list-spacing: var(--ordo-list-spacing);
+  --line-height-normal: var(--ordo-line-height);
+  --line-height-tight: var(--ordo-line-height-tight);
 }
 
 body {
   background-color: var(--ordo-c-bg-base);
   color: var(--ordo-c-text-1);
-  font-family: var(--ordo-font-text);
-  line-height: var(--ordo-line-height);
+  font-family: var(--font-interface);
   caret-color: var(--caret-color);
 }
 
@@ -622,9 +572,8 @@ body {
 }
 
 .markdown-preview-view,
-.popover,
 .workspace-leaf-content[data-type=markdown] {
-  font-family: var(--ordo-font-text);
+  font-family: var(--font-text);
 }
 
 .cm-s-obsidian span.cm-error {
@@ -641,23 +590,22 @@ body {
   background: var(--ordo-c-bg-base);
 }
 
-/* Divisor entre paneles — oculto en reposo (sin !important).
-   El handle queda siempre interactivo para redimensionar; el
-   divisor se muestra únicamente al pasar el cursor. */
+/* Divisor entre paneles — oculto en reposo.
+   El handle queda siempre interactivo para redimensionar. */
 .workspace-leaf-resize-handle,
 .workspace-sidedock-resize-handle {
   background: none;
   border: none;
   box-shadow: none;
-  opacity: 0;
+  filter: opacity(0);
   transition: background-color var(--ordo-duration-fast) var(--ordo-ease);
 }
 
 .workspace-leaf-resize-handle:hover,
 .workspace-sidedock-resize-handle:hover {
-  --divider-color: var(--ordo-c-border-rest);
-  --frame-divider-color: var(--ordo-c-border-rest);
-  opacity: 1;
+  --divider-color: transparent;
+  --frame-divider-color: transparent;
+  filter: opacity(0);
 }
 
 .workspace-split.mod-vertical > .workspace-leaf > .workspace-leaf-resize-handle,
@@ -674,17 +622,21 @@ body {
 /* REPOSO */
 .workspace-split.mod-root .workspace-leaf,
 .workspace-sidedock-vault-profile {
-  border-color: var(--ordo-c-border-rest);
+  box-sizing: border-box;
+  border-radius: var(--ordo-radius-m);
 }
 
 .workspace-leaf-content {
+  /* El fondo conserva su opacidad al cambiar el foco. Atenuar este
+     contenedor también compone sus zonas de scroll sobre otras superficies. */
   background: var(--ordo-c-bg-surface);
 }
 
 .view-header {
   background: var(--ordo-c-bg-surface);
-  margin: 0 1px;
-  border-bottom: 1px solid var(--ordo-c-border-rest);
+  margin: 0;
+  border: 0;
+  border-bottom: var(--ordo-border-width) solid var(--ordo-c-border-rest);
   border-radius: var(--ordo-radius-m) var(--ordo-radius-m) 0 0;
 }
 
@@ -696,11 +648,6 @@ body {
   --icon-color-active: var(--ordo-c-text-1);
 }
 
-.workspace-leaf:not(.mod-active):not(:focus-within) .workspace-leaf-content {
-  opacity: var(--ordo-dim);
-  transition: var(--ordo-transition);
-}
-
 .workspace-sidedock-vault-profile {
   border-color: var(--ordo-c-border-rest);
 }
@@ -710,10 +657,7 @@ body:not(.is-mobile) .workspace-split.mod-right-split .workspace-sidedock-vault-
   flex: 0 0 auto;
   width: calc(100% - 16px);
   background: var(--ordo-bg-1);
-  border-top: 1px solid var(--ordo-c-border-rest);
-  border-right: 1px solid var(--ordo-c-border-rest);
-  border-bottom: 1px solid var(--ordo-c-border-rest);
-  border-left: 1px solid var(--ordo-c-border-rest);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
   border-radius: var(--ordo-radius-s);
   box-shadow: var(--ordo-shadow-rest);
   margin: var(--ordo-gutter) 10px var(--ordo-gutter) 6px;
@@ -728,6 +672,8 @@ body:not(.is-mobile) .workspace-split.mod-right-split .workspace-sidedock-vault-
   overflow: hidden;
 }
 
+body:not(.is-mobile) .workspace-split.mod-left-split .workspace-tab-container:hover,
+body:not(.is-mobile) .workspace-split.mod-right-split .workspace-tab-container:hover,
 body:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile:hover,
 body:not(.is-mobile) .workspace-split.mod-right-split .workspace-sidedock-vault-profile:hover {
   border-top-color: var(--ordo-c-border-focus);
@@ -748,8 +694,9 @@ body:not(.is-mobile) .workspace-split.mod-right-split .workspace-sidedock-vault-
 }
 
 .workspace-tab-container {
+  box-sizing: border-box;
   background: var(--ordo-c-bg-surface);
-  border: 1px solid var(--ordo-c-border-rest);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
   border-radius: var(--ordo-radius-m);
   box-shadow: var(--ordo-shadow-rest);
   margin: var(--ordo-gutter) 10px var(--ordo-gutter) 6px;
@@ -757,21 +704,77 @@ body:not(.is-mobile) .workspace-split.mod-right-split .workspace-sidedock-vault-
   overflow: hidden;
 }
 
-.workspace-split.mod-left-split .workspace-tab-container {
-  border-right-color: transparent;
+body:not(.is-mobile) .workspace-split.mod-left-split .workspace-tab-container,
+body:not(.is-mobile) .workspace-split.mod-right-split .workspace-tab-container {
+  transition: border-color var(--ordo-duration-normal) var(--ordo-ease);
 }
 
-.workspace-split.mod-right-split .workspace-tab-container {
-  border-left-color: transparent;
+/* Los contornos redondeados comparten el trazado nativo y un relleno
+   dentro del borde para evitar halos en las curvas. */
+.workspace-tab-container,
+.workspace-sidedock-vault-profile,
+.callout,
+input[type='text'],
+input[type='search'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='date'],
+textarea,
+.dropdown,
+button,
+.status-bar,
+.modal-container .modal,
+.modal.mod-sidebar-layout,
+.prompt,
+.hover-popover,
+.menu,
+.suggestion-container,
+.tooltip,
+.markdown-rendered .tag,
+.cm-s-obsidian span.cm-hashtag,
+.markdown-rendered :not(pre) > code,
+.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-codeblock) .cm-inline-code,
+img[src$="#outline"],
+div[src$="#outline"] img,
+span[src$="#outline"] img,
+img[src$="#interface"],
+span[src$="#interface"] img,
+.kanban-plugin__lane-items,
+.kanban-plugin__item,
+.kanban-plugin__lane-header-wrapper,
+.kanban-plugin__placeholder,
+#calendar-container .day,
+.style-settings-container[data-level="2"] {
+  corner-shape: var(--corner-shape, round);
+  background-clip: padding-box;
 }
 
-/* FOCO */
-.workspace-leaf.mod-active .workspace-leaf-content,
-.workspace-leaf:focus-within .workspace-leaf-content,
+/* FOCO: cambia el contorno, manteniendo el relleno uniforme. */
+.workspace-tab-container:has(> .workspace-leaf.mod-active),
 .workspace-tab-container:focus-within {
-  opacity: 1;
   border-color: var(--ordo-c-border-focus);
   box-shadow: var(--ordo-shadow-focus);
+}
+
+/* La pestaña activa y su nota forman una superficie continua.
+   Las tarjetas flotantes se conservan en los paneles laterales; el panel
+   principal normal llega hasta la barra de pestañas, como en Obsidian. */
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-container {
+  margin: 0;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-leaf,
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .view-header {
+  border-radius: 0;
+}
+
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .view-header {
+  border-bottom: var(--file-header-border);
 }
 
 .workspace-leaf.mod-active .view-header,
@@ -793,60 +796,14 @@ body:not(.is-mobile) .workspace-split.mod-right-split .workspace-sidedock-vault-
    7 · COMPONENTES UI — inputs, botones, modales, etc.
    ============================================================ */
 
-/* --- Tabs --- */
-.workspace-tabs:not(.mod-stacked) {
-  --tab-text-color: var(--ordo-c-text-2);
-  --tab-text-color-focused: var(--ordo-c-text-2);
-  --tab-text-color-active: var(--ordo-c-text-1);
-  --tab-text-color-focused-active: var(--ordo-c-text-1);
-  --tab-text-color-focused-active-current: var(--ordo-c-text-1);
-  --tab-height: calc(var(--header-height) - 14px);
-  --tab-background: var(--background-modifier-hover);
-  --tab-outline-width: 0px;
-}
+/* Pestañas: altura, curvas, espaciado, controles y estados nativos.
+   La paleta proviene de las variables de fondos, texto y bordes de Ordo.
+   No se añaden cajas ni sombras al interior de la pestaña activa. */
 
-.workspace-tab-header {
-  background: transparent;
-  border-radius: var(--ordo-radius-s);
-  border: none;
-  box-shadow: none;
-  height: var(--tab-height);
-  margin-left: 6px;
-  padding: 0;
-  color: var(--ordo-c-text-2);
-  opacity: var(--ordo-dim-text);
-  transition: var(--ordo-transition);
-}
-
-.workspace-tab-header-inner {
-  padding: 0 10px 0 12px;
-  border: 1px solid transparent;
-  border-radius: var(--ordo-radius-s);
-}
-
-.workspace-tab-header:hover {
-  opacity: 1;
-  color: var(--ordo-c-text-1);
-}
-
-.workspace-tab-header:hover .workspace-tab-header-inner {
-  background-color: var(--tab-background);
-  border-color: var(--ordo-c-border-rest);
-}
-
-.workspace-tab-header.is-active {
-  opacity: 1;
-  color: var(--ordo-c-text-1);
-}
-
-.workspace-tab-header.is-active .workspace-tab-header-inner {
-  background-color: var(--tab-background);
-  border-color: var(--ordo-c-border-focus);
-  box-shadow: var(--ordo-shadow-rest);
-}
-
-.mod-root .workspace-tab-header-status-icon {
-  color: var(--ordo-c-text-2);
+/* Ambos remates necesitan espacio dentro del contenedor que los recorta.
+   En Obsidian 1.14, los 6px nativos recortan las curvas de 10px. */
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-container-inner {
+  padding-inline: max(15px, calc(var(--tab-curve) + var(--tab-outline-width)));
 }
 
 /* --- Inputs, botones --- */
@@ -860,7 +817,7 @@ textarea,
 .dropdown,
 button {
   background-color: var(--ordo-c-bg-elevated);
-  border: 1px solid var(--ordo-c-border-rest);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
   border-radius: var(--ordo-radius-s);
   box-shadow: none;
   color: var(--ordo-c-text-2);
@@ -913,7 +870,7 @@ textarea:focus:not(:focus-visible) {
 /* --- Statusbar --- */
 .status-bar {
   background-color: var(--ordo-c-bg-surface);
-  border: 1px solid var(--ordo-c-border-rest);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
   border-radius: var(--ordo-radius-s);
   box-shadow: var(--ordo-shadow-rest);
   box-sizing: border-box;
@@ -939,7 +896,7 @@ textarea:focus:not(:focus-visible) {
 /* --- Modales, popovers, menús --- */
 .modal-container .modal {
   background: var(--ordo-c-bg-surface);
-  border: 1px solid var(--ordo-c-border-focus);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
   border-radius: var(--ordo-radius-m);
   box-shadow: var(--ordo-shadow-focus);
   overflow: hidden;
@@ -950,27 +907,63 @@ textarea:focus:not(:focus-visible) {
 .hover-popover,
 .menu {
   background: var(--ordo-c-bg-surface);
-  border: 1px solid var(--ordo-c-border-focus);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
   border-radius: var(--ordo-radius-l);
   box-shadow: var(--ordo-shadow-focus);
 }
 
+/* El campo del buscador forma parte del marco, sin otro contorno interior. */
+input.prompt-input,
+input.prompt-input:hover,
+input.prompt-input:focus,
+input.prompt-input:focus-visible {
+  background-color: transparent;
+  border: 0;
+  border-bottom: var(--border-width) solid var(--background-secondary);
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .suggestion-container {
   background: var(--ordo-c-bg-surface);
-  border: 1px solid var(--ordo-c-border-focus);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
   border-radius: var(--ordo-radius-s);
   box-shadow: var(--ordo-shadow-focus);
   overflow: hidden;
 }
 
 .tooltip {
+  --tooltip-background: var(--ordo-c-bg-elevated);
+  /* La flecha nativa usa esta variable en las cuatro orientaciones. */
+  --background-modifier-message: var(--tooltip-background);
   transition: none;
   animation: none;
-  background: var(--ordo-c-bg-elevated);
-  border: 1px solid var(--ordo-c-border-rest);
+  background: var(--tooltip-background);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
   border-radius: var(--ordo-radius-s);
   color: var(--ordo-c-text-1);
   box-shadow: var(--ordo-shadow-rest);
+}
+
+.tooltip.mod-error {
+  --tooltip-background: var(--background-modifier-error);
+}
+
+/* Los 3px de desplazamiento dejan 2px de aire fuera del borde de 1px. */
+.tooltip .tooltip-arrow {
+  transform: translateY(-3px);
+}
+
+.tooltip.mod-top .tooltip-arrow {
+  transform: translateY(3px);
+}
+
+.tooltip.mod-right .tooltip-arrow {
+  transform: translateX(-3px);
+}
+
+.tooltip.mod-left .tooltip-arrow {
+  transform: translateX(3px);
 }
 
 /* --- Búsqueda alineada --- */
@@ -982,8 +975,8 @@ textarea:focus:not(:focus-visible) {
 
 .document-search-container {
   margin: 0 auto;
-  max-width: var(--ordo-max-width);
-  width: var(--ordo-line-width);
+  max-width: 100%;
+  width: min(var(--ordo-line-width), var(--ordo-max-width));
 }
 
 /* --- Progreso --- */
@@ -991,12 +984,13 @@ textarea:focus:not(:focus-visible) {
 .markdown-source-view.is-live-preview progress,
 .markdown-preview-view progress {
   width: 220px;
+  max-width: 100%;
 }
 
 .markdown-rendered progress[value]::-webkit-progress-bar,
 .markdown-source-view.is-live-preview progress[value]::-webkit-progress-bar,
 .markdown-preview-view progress[value]::-webkit-progress-bar {
-  box-shadow: inset 0 0 0 1px var(--progress-outline);
+  box-shadow: inset 0 0 0 var(--ordo-border-width) var(--progress-outline);
 }
 
 .markdown-rendered progress[value^="1"]::-webkit-progress-value,
@@ -1054,79 +1048,22 @@ textarea:focus:not(:focus-visible) {
   background: transparent;
 }
 
+.markdown-source-view.mod-cm6 .cm-scroller {
+  font-family: var(--font-text);
+  line-height: var(--line-height-normal);
+}
+
 .markdown-source-view {
   color: var(--text-normal);
 }
 
-.markdown-source-view.mod-cm6 .cm-content {
-  padding-top: 0.5em;
-  padding-bottom: 2em;
-}
-
-.markdown-source-view.mod-cm6 .cm-scroller {
-  padding-inline-end: 0;
-  padding-inline-start: 0;
-}
-
-.cm-s-obsidian .cm-line.HyperMD-header {
-  padding-top: calc(var(--ordo-p-spacing) / 2);
-}
-
-.markdown-rendered .mod-header + div > * {
-  margin-block-start: 0;
-}
-
-/* Espaciado de listas */
-.markdown-source-view ol > li,
-.markdown-source-view ul > li,
-.markdown-preview-view ol > li,
-.markdown-preview-view ul > li,
-.mod-cm6 .HyperMD-list-line.cm-line,
-.mod-cm6 .HyperMD-list-line {
-  padding-top: var(--ordo-list-spacing);
-  padding-bottom: var(--ordo-list-spacing);
-}
-
-/* Encabezados editor */
-.cm-editor .HyperMD-header-1,
-.cm-editor .HyperMD-header-2,
-.cm-editor .HyperMD-header-3,
-.cm-editor .HyperMD-header-4 {
-  letter-spacing: -0.02em;
-}
-
-.cm-editor .HyperMD-header-1,
-.cm-editor .HyperMD-header-2,
-.cm-editor .HyperMD-header-3,
-.cm-editor .HyperMD-header-4,
-.cm-editor .HyperMD-header-5,
-.cm-editor .HyperMD-header-6 {
-  line-height: var(--ordo-line-height-tight);
-}
-
+/* Encabezados, listas y párrafos conservan la distribución nativa. */
 /* Formato markdown */
 .cm-formatting:not(.cm-formatting-code-block):not(.cm-formatting-hashtag) {
   color: var(--text-formatting);
 }
 
-/* Gutters */
-body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters {
-  position: absolute;
-  z-index: var(--ordo-z-cover);
-  margin-inline-end: 0;
-}
-
-body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters .cm-gutter:before {
-  content: "";
-  height: 100%;
-  top: -100%;
-  width: 100%;
-  position: absolute;
-  z-index: calc(var(--ordo-z-cover) + 1);
-  background-color: var(--ordo-c-bg-surface);
-  min-width: 32px;
-}
-
+/* Obsidian reserva el espacio de números y controles de plegado. */
 .cm-editor .cm-lineNumbers {
   background-color: var(--ordo-c-bg-surface);
 }
@@ -1148,7 +1085,7 @@ body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters .cm-gutter:bef
   box-shadow: -25vw 0 var(--active-line-bg), 25vw 0 var(--active-line-bg);
 }
 
-/* --- Código lectura --- */
+/* --- Código: misma tarjeta en lectura y en las capas nativas del editor --- */
 .markdown-rendered pre,
 .markdown-preview-view pre {
   background: var(--code-background);
@@ -1156,47 +1093,50 @@ body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters .cm-gutter:bef
   box-shadow: var(--ordo-shadow-rest);
   padding: 1rem 1.25rem;
   overflow-x: auto;
-  font-family: var(--ordo-font-mono);
+  font-family: var(--font-monospace);
   font-size: var(--code-size);
   line-height: var(--ordo-code-line-height);
 }
 
-/* --- Código Live Preview --- */
-.cm-editor .HyperMD-codeblock {
-  background: var(--code-background);
-  border-radius: 0;
-  padding-block: 0;
-  padding-inline: 1.25rem;
-  font-family: var(--ordo-font-mono);
+/* CodeMirror conserva el espaciado de las líneas, fences e indentación. */
+.markdown-source-view.mod-cm6 .HyperMD-codeblock {
+  font-family: var(--font-monospace);
   font-size: var(--code-size);
   line-height: var(--ordo-code-line-height);
 }
 
-.cm-editor .HyperMD-codeblock-begin {
-  border-radius: var(--code-radius) var(--code-radius) 0 0;
-  box-shadow: 0 -4px 8px -2px var(--ordo-shadow-ink);
-  margin-top: calc(var(--ordo-p-spacing) / 2);
-  padding-top: 1rem;
+/* La sombra se dibuja en una decoración del fondo nativo. Su recorte
+   no toca el relleno, evitando costuras entre líneas con alturas fraccionarias. */
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--ordo-shadow-rest);
+  clip-path: inset(1px -32px);
+  pointer-events: none;
 }
 
-.cm-editor .HyperMD-codeblock-end {
-  border-radius: 0 0 var(--code-radius) var(--code-radius);
-  box-shadow: 0 4px 10px -2px var(--ordo-shadow-ink);
-  margin-bottom: calc(var(--ordo-p-spacing) / 2);
-  padding-bottom: 1rem;
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg::before {
+  clip-path: inset(-32px -32px 1px);
 }
 
-/* Código inline */
-.markdown-rendered code:not(pre code),
-.markdown-preview-view code:not(pre code),
-.cm-editor .cm-inline-code {
-  background: var(--ordo-c-bg-elevated);
-  border: 1px solid var(--ordo-c-border-rest);
-  border-radius: 4px;
-  padding: 0.125em 0.375em;
-  font-family: var(--ordo-font-mono);
-  font-size: var(--code-size);
-  color: var(--code-normal);
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-end-bg::before {
+  clip-path: inset(1px -32px -32px);
+}
+
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg.HyperMD-codeblock-end-bg::before {
+  clip-path: inset(-32px);
+}
+
+/* Los tokens nativos también unen correctamente los backticks mientras
+   se editan, sin repetir bordes y padding en cada fragmento del código. */
+.markdown-rendered :not(pre) > code,
+.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-codeblock) .cm-inline-code {
+  --code-background: var(--ordo-c-bg-elevated);
+  --code-border-width: var(--ordo-border-width);
+  --code-border-color: var(--ordo-c-border-rest);
+  --code-radius: 4px;
 }
 
 /* Math inline — neutralizado: LMath gestiona su propio estilo */
@@ -1207,9 +1147,10 @@ body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters .cm-gutter:bef
   border: none;
   padding: 0;
   font-size: inherit;
+  line-height: inherit;
 }
 
-/* Math block — neutralizado: LMath gestiona su propio estilo */
+/* Math block - Obsidian/MathJax conserva su estilo nativo. */
 
 /* --- Citas --- */
 .markdown-rendered blockquote,
@@ -1223,8 +1164,6 @@ body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters .cm-gutter:bef
 }
 
 .markdown-source-view.mod-cm6 .HyperMD-quote {
-  border-inline-start: var(--blockquote-border-thickness) solid var(--blockquote-border-color);
-  padding-inline-start: 1.1em;
   color: var(--text-muted);
   font-style: italic;
 }
@@ -1310,41 +1249,7 @@ body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters .cm-gutter:bef
   border-left-color: rgb(var(--callout-color));
 }
 
-/* --- Tablas --- */
-.markdown-source-view.mod-cm6 table,
-.markdown-preview-view table {
-  border-collapse: collapse;
-  width: 100%;
-  max-width: var(--ordo-line-width);
-  margin: 0 auto var(--ordo-p-spacing);
-  font-size: var(--table-text-size);
-}
-
-.markdown-source-view.mod-cm6 td,
-.markdown-source-view.mod-cm6 th,
-.markdown-preview-view td,
-.markdown-preview-view th {
-  padding: var(--table-cell-padding);
-  border: var(--table-border-width) solid var(--table-border-color);
-  text-align: left;
-}
-
-.markdown-source-view.mod-cm6 th,
-.markdown-preview-view th {
-  background: var(--table-header-background);
-  font-weight: var(--table-header-weight);
-  color: var(--ordo-c-text-1);
-  border-bottom: var(--table-header-border-width) solid var(--table-header-border-color);
-}
-
-.markdown-preview-view tr:nth-child(even) td {
-  background: var(--table-row-alt-background);
-}
-
-.markdown-preview-view tr:hover td {
-  background: var(--table-row-background-hover);
-}
-
+/* --- Tablas: alineación, celdas, encabezados y controles nativos --- */
 .cm-s-obsidian .HyperMD-table-row span.cm-hmd-table-sep,
 .cm-hmd-table-sep-dummy {
   color: var(--ordo-c-text-3);
@@ -1371,6 +1276,26 @@ body :not(.canvas-node) .markdown-source-view.mod-cm6 .cm-gutters .cm-gutter:bef
 .external-link {
   background-image: none;
   padding-right: 0;
+}
+
+/* Tags: mismo texto y estados en lectura y en los fragmentos del editor. */
+.markdown-rendered a.tag,
+.cm-s-obsidian span.cm-hashtag {
+  color: var(--tag-color);
+  text-decoration: var(--tag-decoration);
+  transition: color var(--ordo-duration-normal) var(--ordo-ease);
+}
+
+@media (hover: hover) {
+  .markdown-rendered a.tag:hover,
+  .cm-s-obsidian span.cm-hashtag:hover,
+  .cm-s-obsidian span.cm-hashtag-begin:has(+ .cm-hashtag-end:hover),
+  .cm-s-obsidian span.cm-hashtag-begin:hover + .cm-hashtag-end {
+    background-color: var(--tag-background-hover);
+    border-color: var(--tag-border-color-hover);
+    color: var(--tag-color-hover);
+    text-decoration: var(--tag-decoration-hover);
+  }
 }
 
 /* --- Imágenes --- */
@@ -1426,12 +1351,12 @@ span[src$="#round"] img:not(.emoji) {
 img[src$="#outline"],
 div[src$="#outline"] img,
 span[src$="#outline"] img {
-  border: 1px solid var(--ordo-c-border-rest);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
 }
 
 img[src$="#interface"],
 span[src$="#interface"] img {
-  border: 1px solid var(--ordo-c-border-rest);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
   box-shadow: var(--ordo-shadow-rest);
   margin-top: 10px;
   margin-bottom: 15px;
@@ -1440,7 +1365,7 @@ span[src$="#interface"] img {
 
 /* --- Separador horizontal --- */
 .markdown-preview-view hr,
-.cm-editor .HyperMD-hr {
+.markdown-source-view.mod-cm6 .HyperMD-hr hr {
   border: none;
   border-top: 1px solid var(--ordo-c-border-rest);
   margin: 2rem auto;
@@ -1451,29 +1376,13 @@ span[src$="#interface"] img {
    9 · ANCHO DE LECTURA / EMBEDS
    ============================================================ */
 
-.markdown-preview-view .markdown-preview-sizer {
-  max-width: 100%;
-  margin-inline: auto;
-  width: 100%;
-}
-
-.markdown-preview-view.is-readable-line-width .markdown-preview-sizer > div,
-.markdown-source-view.mod-cm6.is-readable-line-width .cm-contentContainer.cm-contentContainer > .cm-content > div,
-.markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer > .inline-title,
-.markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer > .embedded-backlinks,
-.markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer > .metadata-container {
-  max-width: var(--ordo-max-width);
-  width: var(--ordo-line-width);
-  margin-inline: auto;
-}
-
-.markdown-source-view.mod-cm6.is-readable-line-width .cm-contentContainer.cm-contentContainer > .cm-content > *:not(div) {
-  max-width: min(var(--ordo-line-width), var(--ordo-max-width));
-  margin-inline-start: max(calc(50% - var(--ordo-line-width) / 2), calc(50% - var(--ordo-max-width) / 2));
-}
-
-.is-readable-line-width {
-  --file-margins: 1rem 0 0 0;
+/* Igual que Obsidian: 700px independientes del tamaño de texto.
+   El editor y la lectura conservan los sizers, márgenes y ajustes nativos;
+   al reducir la letra caben más palabras sin estrechar la columna.
+   wide y max son opciones explícitas del usuario. */
+.markdown-source-view,
+.markdown-preview-view {
+  --file-line-width: calc(var(--ordo-line-width) * var(--ordo-width-scale));
 }
 
 /* Embeds */
@@ -1505,11 +1414,6 @@ span[src$="#interface"] img {
   padding-bottom: 0;
 }
 
-.is-live-preview.is-readable-line-width > .cm-callout .callout {
-  max-width: var(--ordo-max-width);
-  margin: 0 auto;
-}
-
 /* ============================================================
    10 · SIDEBAR / NAV — file explorer, backlinks, tags
    ============================================================ */
@@ -1530,7 +1434,23 @@ span[src$="#interface"] img {
 .nav-file-title.is-active,
 .nav-folder-title.is-active,
 .tree-item-self.is-active {
-  border: 1px solid var(--ordo-c-border-focus);
+  position: relative;
+  box-shadow: none;
+}
+
+/* Un borde real sobre una decoración no altera el tamaño de la fila.
+   Evita la arista tenue que dejaba la sombra interior de selección. */
+.nav-file-title.is-active::after,
+.nav-folder-title.is-active::after,
+.tree-item-self.is-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
+  border-radius: inherit;
+  corner-shape: inherit;
+  pointer-events: none;
 }
 
 .nav-folder-title-content {
@@ -1589,7 +1509,7 @@ body.row-hover .table-view-table > tbody > tr:hover {
 body .dataview.inline-field-key,
 body .dataview.inline-field-value,
 body .dataview .inline-field-standalone-value {
-  font-family: var(--ordo-font-text);
+  font-family: var(--font-text);
   font-size: calc(var(--font-adaptive-normal) - 2px);
   background: transparent;
   color: var(--ordo-c-text-2);
@@ -1604,7 +1524,7 @@ body div.dataview-error-box {
 
 /* --- Kanban --- */
 .kanban-plugin {
-  --kanban-border: 1px;
+  --kanban-border: var(--ordo-border-width);
   background-color: var(--ordo-c-bg-surface);
 }
 
@@ -1616,7 +1536,7 @@ body div.dataview-error-box {
 
 .kanban-plugin__item {
   background: var(--ordo-c-bg-surface);
-  border: 1px solid var(--ordo-c-border-rest);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
   border-radius: var(--ordo-radius-s);
 }
 
@@ -1631,7 +1551,7 @@ body div.dataview-error-box {
 }
 
 .kanban-plugin__lane-items > .kanban-plugin__placeholder:only-child {
-  border: 1px dashed var(--ordo-c-border-rest);
+  border: var(--ordo-border-width) dashed var(--ordo-c-border-rest);
   height: 2em;
 }
 
@@ -1664,7 +1584,7 @@ body div.dataview-error-box {
 
 #calendar-container .day {
   border-radius: var(--ordo-radius-s);
-  border: 1px solid transparent;
+  border: var(--ordo-border-width) solid transparent;
 }
 
 #calendar-container .day:hover,
@@ -1681,7 +1601,7 @@ body div.dataview-error-box {
 /* --- Style Settings --- */
 .style-settings-container[data-level="2"] {
   background: var(--ordo-c-bg-elevated);
-  border: 1px solid var(--ordo-c-border-rest);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
   border-radius: var(--ordo-radius-s);
   padding: 10px 20px;
 }
@@ -1733,40 +1653,39 @@ body div.dataview-error-box {
   --metadata-input-font-size: var(--font-adaptive-smaller);
 }
 
-.is-phone .view-header {
-  border-bottom: none;
+/* En móvil, la nota ocupa la superficie nativa completa. Las tarjetas
+   de escritorio no añaden bordes ni márgenes a la navegación táctil. */
+.is-mobile .workspace-tab-container {
+  margin: 0;
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.is-mobile .workspace-leaf,
+.is-mobile .view-header {
   border-radius: 0;
 }
 
-.is-phone .workspace-tab-container {
-  margin: var(--ordo-gutter) 6px var(--ordo-gutter) 6px;
-  width: calc(100% - 12px);
+.is-mobile .view-header {
+  border-bottom: 0;
 }
 
-.is-phone .workspace-sidedock-vault-profile {
-  margin: var(--ordo-gutter) 6px var(--ordo-gutter) 6px;
+/* El degradado del explorador cubre también sus extremos laterales. */
+.is-mobile.is-floating-nav .workspace-drawer .workspace-leaf-content::after,
+.is-mobile.is-floating-nav .workspace-drawer .nav-buttons-container::after {
+  width: 100%;
+  margin: 0;
+}
+
+.is-mobile .modal-container .modal {
+  border-radius: var(--modal-radius);
+  border-width: var(--modal-border-width);
 }
 
 .is-phone .markdown-preview-view pre {
   padding: 0.75rem 1rem;
-  font-size: 0.8em;
-}
-
-.is-phone .cm-editor .HyperMD-codeblock {
-  padding-inline: 1rem;
-  font-size: 0.8em;
-}
-
-.is-phone .cm-editor .HyperMD-codeblock-begin {
-  padding-top: 0.75rem;
-}
-
-.is-phone .cm-editor .HyperMD-codeblock-end {
-  padding-bottom: 0.75rem;
-}
-
-.is-phone ul > li:not(.task-list-item)::marker {
-  font-size: 0.8em;
 }
 
 @media (max-width: 400pt) {
@@ -1775,16 +1694,6 @@ body div.dataview-error-box {
     --ordo-gutter: 8px;
   }
 
-  .markdown-preview-view h1 { font-size: 1.25em; }
-  .markdown-preview-view h2 { font-size: 1.15em; }
-  .markdown-preview-view h3 { font-size: 1.05em; }
-}
-
-.is-tablet .workspace-drawer:not(.is-pinned) {
-  margin: 30px 16px 0;
-  height: calc(100vh - 48px);
-  border-radius: 15px;
-  border: none;
 }
 
 /* ============================================================
@@ -1833,12 +1742,10 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-@media (prefers-contrast: high) {
+@media (prefers-contrast: more) {
   body {
     --ordo-border-rest: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 20%));
     --ordo-border-focus: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 55%));
-    --ordo-dim: 1;
-    --ordo-dim-text: 1;
     --ordo-image-dim: 1;
   }
 
@@ -1904,12 +1811,16 @@ body.styled-scrollbar {
 
 body.wide,
 .wide {
-  --ordo-line-width: var(--ordo-line-width-wide);
+  --ordo-width-scale: 1.125;
 }
 
-body.max,
-.max {
-  --ordo-line-width: var(--ordo-max-width);
+body.max .markdown-source-view,
+body.max .markdown-preview-view,
+.max .markdown-source-view,
+.max .markdown-preview-view,
+.markdown-source-view.max,
+.markdown-preview-view.max {
+  --file-line-width: var(--ordo-max-width);
 }
 
 .table-lines {
@@ -1978,7 +1889,7 @@ settings:
     type: heading
     level: 2
     collapsed: false
-    description: Sistema de tokens completo. Grises oscuro/claro con contenido atenuado en reposo y foco progresivo.
+    description: Sistema de tokens completo. Grises oscuro/claro con fondos uniformes y foco progresivo en bordes y sombras.
   -
     id: base-colors
     title: Color base
@@ -2017,9 +1928,9 @@ settings:
     id: ordo-l-light
     title: Luminosidad fondo (light)
     type: variable-number-slider
-    default: 90.5
-    min: 84
-    max: 95
+    default: 74
+    min: 68
+    max: 86
     step: 0.5
     format: '%'
   -
@@ -2084,22 +1995,6 @@ settings:
     type: heading
     level: 2
     collapsed: true
-  -
-    id: ordo-dim
-    title: Atenuación paneles en reposo
-    type: variable-number-slider
-    default: 0.92
-    min: 0.8
-    max: 1
-    step: 0.01
-  -
-    id: ordo-dim-text
-    title: Atenuación tabs en reposo
-    type: variable-number-slider
-    default: 0.72
-    min: 0.4
-    max: 1
-    step: 0.02
   -
     id: ordo-image-dim
     title: Atenuación imágenes (dark)
@@ -2184,7 +2079,7 @@ settings:
     id: ordo-line-height
     title: Altura de línea
     type: variable-number-slider
-    default: 1.6
+    default: 1.5
     min: 1.2
     max: 2
     step: 0.05
@@ -2192,12 +2087,12 @@ settings:
     id: ordo-p-spacing
     title: Espaciado párrafos
     type: variable-text
-    default: 1.5rem
+    default: 1rem
   -
     id: ordo-heading-spacing
     title: Espaciado encabezados
     type: variable-text
-    default: 1.75rem
+    default: calc(var(--ordo-p-spacing) * 2.5)
   -
     id: headings
     title: Encabezados
@@ -2208,37 +2103,37 @@ settings:
     id: h1-size
     title: Tamaño H1
     type: variable-text
-    default: 1.35em
+    default: 1.618em
   -
     id: h2-size
     title: Tamaño H2
     type: variable-text
-    default: 1.2em
+    default: 1.462em
   -
     id: h3-size
     title: Tamaño H3
     type: variable-text
-    default: 1.1em
+    default: 1.318em
   -
     id: h4-size
     title: Tamaño H4
     type: variable-text
-    default: 1em
+    default: 1.188em
   -
     id: h5-size
     title: Tamaño H5
     type: variable-text
-    default: 0.9em
+    default: 1.076em
   -
     id: h6-size
     title: Tamaño H6
     type: variable-text
-    default: 0.85em
+    default: 1em
   -
     id: inline-title-size
     title: Tamaño título inline
     type: variable-text
-    default: 1.6em
+    default: var(--h1-size)
   -
     id: layout
     title: Ancho de lectura
@@ -2248,13 +2143,15 @@ settings:
   -
     id: ordo-line-width
     title: Ancho de línea
+    description: 700px como el tema oficial. Usa px para mantener la columna fija al cambiar el tamaño del texto.
     type: variable-text
-    default: 40rem
+    default: 700px
   -
     id: ordo-max-width
     title: Ancho máximo
+    description: Ancho utilizado al activar la opción Ancho máximo global o la clase max.
     type: variable-text
-    default: 88%
+    default: 100%
   -
     id: features
     title: Componentes y extras
@@ -2280,7 +2177,7 @@ settings:
     id: row-hover
     title: Fila resaltada al pasar
     type: class-toggle
-    default: true
+    default: false
   -
     id: full-width-media
     title: Imágenes a ancho completo
