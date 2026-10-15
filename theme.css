@@ -1,6 +1,6 @@
 /* ============================================================
    ORDO TEST — Sistema de tokens completo
-   Basado en la identidad Ordo: grises sin negro/blanco puro,
+   Basado en la identidad Ordo: superficies de grises fríos,
    profundidad por sombras suaves + radio. Fondos uniformes,
    foco realza el borde y la sombra sin atenuar el panel.
 
@@ -228,9 +228,8 @@ body {
 }
 
 /* --- Light mode tokens ---
-   Light interface stays inside the gray scale: intermediate light
-   values, neither near-white nor dark, so there is no pure #fff
-   surface and the identity ("no pure black or white") holds. */
+   Cool gray surfaces with dark text and configurable lightness.
+   Native components and print styles may also use pure white. */
 .theme-light {
   --ordo-l-light: 74%;
 
@@ -420,11 +419,11 @@ body {
   --tag-padding-x: 0.5em;
   --tag-radius: 4px;
   --tag-background: var(--ordo-c-bg-elevated);
-  --tag-background-hover: var(--ordo-c-bg-hover);
+  --tag-background-hover: var(--tag-background);
   --tag-color: var(--ordo-c-text-1);
   --tag-color-hover: var(--ordo-c-text-1);
   --tag-border-color: var(--ordo-c-border-rest);
-  --tag-border-color-hover: var(--ordo-c-border-focus);
+  --tag-border-color-hover: var(--tag-border-color);
   --tag-border-width: var(--ordo-border-width);
 
   /* --- Callouts --- */
@@ -751,7 +750,7 @@ span[src$="#interface"] img,
 }
 
 /* FOCO: cambia el contorno, manteniendo el relleno uniforme. */
-.workspace-tab-container:has(> .workspace-leaf.mod-active),
+.workspace-tabs.mod-active > .workspace-tab-container,
 .workspace-tab-container:focus-within {
   border-color: var(--ordo-c-border-focus);
   box-shadow: var(--ordo-shadow-focus);
@@ -1105,28 +1104,49 @@ input.prompt-input:focus-visible {
   line-height: var(--ordo-code-line-height);
 }
 
-/* La sombra se dibuja en una decoración del fondo nativo. Su recorte
-   no toca el relleno, evitando costuras entre líneas con alturas fraccionarias. */
+/* El fondo nativo contiene una capa con sombra. El contenedor deja espacio
+   a los lados y en los extremos del bloque, sin recortes entre líneas. */
+.markdown-source-view.mod-cm6 div.HyperMD-codeblock-bg {
+  --ordo-code-shadow-top: 0px;
+  --ordo-code-shadow-bottom: 0px;
+  margin: calc(-1 * var(--ordo-code-shadow-top)) -16px calc(-1 * var(--ordo-code-shadow-bottom));
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.markdown-source-view.mod-cm6 div.HyperMD-codeblock-begin-bg {
+  --ordo-code-shadow-top: 16px;
+}
+
+.markdown-source-view.mod-cm6 div.HyperMD-codeblock-end-bg {
+  --ordo-code-shadow-bottom: 16px;
+}
+
 .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
+  inset: var(--ordo-code-shadow-top) 16px var(--ordo-code-shadow-bottom);
+  background: var(--code-background);
+  border: var(--code-border-width) solid var(--code-border-color);
+  border-block-width: 0;
+  border-radius: 0;
   box-shadow: var(--ordo-shadow-rest);
-  clip-path: inset(1px -32px);
   pointer-events: none;
 }
 
 .markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg::before {
-  clip-path: inset(-32px -32px 1px);
+  border-top-width: var(--code-border-width);
+  border-top-left-radius: var(--code-radius);
+  border-top-right-radius: var(--code-radius);
 }
 
 .markdown-source-view.mod-cm6 .HyperMD-codeblock-end-bg::before {
-  clip-path: inset(1px -32px -32px);
-}
-
-.markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg.HyperMD-codeblock-end-bg::before {
-  clip-path: inset(-32px);
+  border-bottom-width: var(--code-border-width);
+  border-bottom-left-radius: var(--code-radius);
+  border-bottom-right-radius: var(--code-radius);
 }
 
 /* Los tokens nativos también unen correctamente los backticks mientras
@@ -1288,9 +1308,7 @@ input.prompt-input:focus-visible {
 
 @media (hover: hover) {
   .markdown-rendered a.tag:hover,
-  .cm-s-obsidian span.cm-hashtag:hover,
-  .cm-s-obsidian span.cm-hashtag-begin:has(+ .cm-hashtag-end:hover),
-  .cm-s-obsidian span.cm-hashtag-begin:hover + .cm-hashtag-end {
+  .cm-s-obsidian span.cm-hashtag:hover {
     background-color: var(--tag-background-hover);
     border-color: var(--tag-border-color-hover);
     color: var(--tag-color-hover);

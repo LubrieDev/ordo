@@ -1,6 +1,6 @@
 # Ordo
 
-Ordo is a dark-first, minimal [Obsidian](https://obsidian.md) theme: cold grays without pure black or white, depth from soft shadows and radius, and content that dims at rest and brightens on focus.
+Ordo is a minimal [Obsidian](https://obsidian.md) theme with dark and light color schemes, cool gray surfaces, soft shadows, and rounded corners. Brighter borders and deeper shadows indicate focus.
 
 ## Installation
 
