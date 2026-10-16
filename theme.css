@@ -48,7 +48,7 @@ body {
   --ordo-text-2: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 56%));
   --ordo-text-3: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 37%));
 
-  /* --- Acento predeterminado #73645F; personalizable desde Obsidian --- */
+  /* --- Acento #73645F predeterminado; personalizable desde Obsidian --- */
   --accent-h: 15;
   --accent-s: 9.52381%;
   --accent-l: 41.176471%;
@@ -113,6 +113,8 @@ body {
   --ordo-shadow-rest: var(--ordo-shadow-s);
   --ordo-shadow-focus: var(--ordo-shadow-l);
   --ordo-shadow-ink: rgb(0 0 0 / 0.25);
+  --ordo-code-halo: 0 0 0 1px color-mix(in srgb, var(--text-normal) 9%, transparent),
+    0 0 16px 2px color-mix(in srgb, var(--text-normal) 6%, transparent);
 
   /* --- Animaciones --- */
   --ordo-duration-none: 0ms;
@@ -292,6 +294,16 @@ body {
   --active-line-bg: rgb(0 0 0 / 0.03);
   --text-on-accent: var(--ordo-bg-2);
   --checkbox-marker-color: var(--ordo-bg-2);
+
+  /* La sintaxis conserva sus matices con tinta suficiente sobre el gris claro. */
+  --code-comment: var(--ordo-c-text-2);
+  --code-keyword: color-mix(in srgb, var(--ordo-purple) 50%, var(--ordo-c-text-1));
+  --code-important: color-mix(in srgb, var(--ordo-yellow) 50%, var(--ordo-c-text-1));
+  --code-string: color-mix(in srgb, var(--ordo-green) 50%, var(--ordo-c-text-1));
+  --code-function: color-mix(in srgb, var(--ordo-blue) 50%, var(--ordo-c-text-1));
+  --code-property: color-mix(in srgb, var(--ordo-cyan) 50%, var(--ordo-c-text-1));
+  --code-tag: color-mix(in srgb, var(--ordo-red) 50%, var(--ordo-c-text-1));
+  --code-value: color-mix(in srgb, var(--ordo-orange) 50%, var(--ordo-c-text-1));
 }
 
 .theme-light .callout[data-callout="note"],
@@ -392,23 +404,27 @@ body {
   --code-background: var(--ordo-c-bg-base);
   --code-normal: var(--ordo-c-text-1);
   --code-radius: var(--ordo-radius-s);
-  --code-comment: var(--ordo-c-text-3);
+  --code-comment: color-mix(in srgb, var(--ordo-c-text-3) 85%, var(--ordo-c-text-1));
   --code-function: var(--ordo-blue);
   --code-keyword: var(--ordo-purple);
   --code-important: var(--ordo-yellow);
   --code-operator: var(--ordo-c-text-2);
   --code-property: var(--ordo-cyan);
-  --code-punctuation: var(--ordo-c-text-3);
+  --code-punctuation: var(--code-comment);
   --code-string: var(--ordo-green);
   --code-tag: var(--ordo-red);
   --code-value: var(--ordo-orange);
 
   /* --- Enlaces --- */
-  --link-color: var(--ordo-c-text-1);
+  --link-color: color-mix(in srgb, var(--ordo-c-accent) 25%, var(--ordo-c-text-1));
   --link-color-hover: var(--ordo-c-text-1);
-  --link-decoration: none;
-  --link-external-color: var(--ordo-c-text-1);
-  --link-external-decoration: none;
+  --link-decoration: underline;
+  --link-decoration-hover: underline;
+  --link-decoration-thickness: 1px;
+  --link-external-color: var(--link-color);
+  --link-external-color-hover: var(--link-color-hover);
+  --link-external-decoration: var(--link-decoration);
+  --link-external-decoration-hover: var(--link-decoration-hover);
   --link-unresolved-color: var(--ordo-c-text-2);
   --link-unresolved-decoration-color: var(--ordo-c-border-focus);
   --link-unresolved-opacity: 0.8;
@@ -440,7 +456,9 @@ body {
   /* --- Citas --- */
   --blockquote-border-thickness: 3px;
   --blockquote-border-color: var(--ordo-c-border-focus);
-  --blockquote-style: normal;
+  --blockquote-color: var(--text-muted);
+  --blockquote-style: italic;
+  --blockquote-font-style: italic;
 
   /* --- Tablas --- */
   /* Geometría, encabezados y filas nativos; selección en la paleta Ordo. */
@@ -805,6 +823,84 @@ body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-
   padding-inline: max(15px, calc(var(--tab-curve) + var(--tab-outline-width)));
 }
 
+/* El contorno activo ya separa las pestañas: no duplicar la división
+   con las rayas verticales interiores. */
+.mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-inner::after {
+  display: none;
+}
+
+/* Un solo fondo sigue a la pestaña activa. Cada grupo conserva su propia
+   ancla; los títulos y los controles mantienen su distribución nativa.
+   Sin soporte de anclas, al arrastrar o con movimiento reducido se usa
+   el dibujo nativo, sin animación. */
+@supports (anchor-name: --ordo-active-tab) and (anchor-scope: --ordo-active-tab) and (left: anchor(left)) and (width: anchor-size(width)) {
+  @media (prefers-reduced-motion: no-preference) {
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container {
+      anchor-scope: --ordo-active-tab;
+      --ordo-tab-motion: calc(var(--ordo-duration-normal) * 1.5);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header {
+      z-index: 1;
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header.is-active {
+      anchor-name: --ordo-active-tab;
+      background-color: transparent;
+      box-shadow: none;
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header.is-active::before,
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header.is-active::after {
+      box-shadow: none;
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-container-inner::after,
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::before,
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::after {
+      content: '';
+      position: absolute;
+      position-anchor: --ordo-active-tab;
+      pointer-events: none;
+      z-index: 0;
+      transition: left var(--ordo-tab-motion) var(--ordo-ease), width var(--ordo-tab-motion) var(--ordo-ease);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-container-inner::after {
+      left: anchor(left, -10000px);
+      top: anchor(top);
+      width: anchor-size(width);
+      height: anchor-size(height);
+      border-radius: var(--tab-radius-active);
+      corner-shape: var(--tab-corner-shape);
+      background: var(--tab-background-active);
+      box-shadow: 0 0 0 var(--tab-outline-width) var(--tab-outline-color);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::before,
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::after {
+      top: calc(anchor(bottom) - var(--tab-curve));
+      width: var(--tab-curve);
+      height: var(--tab-curve);
+      background: radial-gradient(circle at var(--ordo-tab-curve-center) 0,
+        transparent calc(var(--tab-curve) - var(--tab-outline-width)),
+        var(--tab-outline-color) calc(var(--tab-curve) - var(--tab-outline-width)),
+        var(--tab-outline-color) var(--tab-curve),
+        var(--tab-background-active) var(--tab-curve));
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::before {
+      --ordo-tab-curve-center: 0;
+      left: calc(anchor(left, -10000px) - var(--tab-curve));
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::after {
+      --ordo-tab-curve-center: 100%;
+      left: anchor(right, -10000px);
+    }
+  }
+}
+
 /* --- Inputs, botones --- */
 input[type='text'],
 input[type='search'],
@@ -1104,49 +1200,96 @@ input.prompt-input:focus-visible {
   line-height: var(--ordo-code-line-height);
 }
 
-/* El fondo nativo contiene una capa con sombra. El contenedor deja espacio
-   a los lados y en los extremos del bloque, sin recortes entre líneas. */
-.markdown-source-view.mod-cm6 div.HyperMD-codeblock-bg {
-  --ordo-code-shadow-top: 0px;
-  --ordo-code-shadow-bottom: 0px;
-  margin: calc(-1 * var(--ordo-code-shadow-top)) -16px calc(-1 * var(--ordo-code-shadow-bottom));
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  overflow: hidden;
-  pointer-events: none;
+/* La capa se comparte entre todas las líneas: las etiquetas de lenguaje,
+   copia y plegado pueden sobresalir sin quedar detrás de la línea siguiente. */
+.markdown-source-view.mod-cm6 .cm-content {
+  isolation: isolate;
 }
 
-.markdown-source-view.mod-cm6 div.HyperMD-codeblock-begin-bg {
-  --ordo-code-shadow-top: 16px;
-}
-
-.markdown-source-view.mod-cm6 div.HyperMD-codeblock-end-bg {
-  --ordo-code-shadow-bottom: 16px;
-}
-
+/* La sombra usa el mismo token que lectura. La capa común del contenido
+   permite que los fondos nativos oculten las uniones entre líneas y que
+   las etiquetas y los controles se dibujen completos encima del bloque. */
 .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg::before {
   content: "";
   position: absolute;
-  inset: var(--ordo-code-shadow-top) 16px var(--ordo-code-shadow-bottom);
-  background: var(--code-background);
-  border: var(--code-border-width) solid var(--code-border-color);
-  border-block-width: 0;
-  border-radius: 0;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   box-shadow: var(--ordo-shadow-rest);
   pointer-events: none;
 }
 
-.markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg::before {
-  border-top-width: var(--code-border-width);
-  border-top-left-radius: var(--code-radius);
-  border-top-right-radius: var(--code-radius);
-}
+/* Un halo exterior tenue, sin alterar el fondo ni el tamaño del bloque.
+   El editor tiene líneas hermanas, no una tarjeta que las agrupe: las
+   anclas delimitan únicamente el bloque bajo el cursor. */
+@media screen and (hover: hover) {
+  .markdown-rendered pre,
+  .markdown-preview-view pre,
+  .markdown-source-view.mod-cm6 .cm-content {
+    --ordo-code-halo-duration: var(--ordo-duration-normal);
+  }
 
-.markdown-source-view.mod-cm6 .HyperMD-codeblock-end-bg::before {
-  border-bottom-width: var(--code-border-width);
-  border-bottom-left-radius: var(--code-radius);
-  border-bottom-right-radius: var(--code-radius);
+  .markdown-rendered pre,
+  .markdown-preview-view pre {
+    transition: box-shadow var(--ordo-code-halo-duration) var(--ordo-ease);
+  }
+
+  .markdown-rendered pre:hover,
+  .markdown-preview-view pre:hover {
+    box-shadow: var(--ordo-shadow-rest), var(--ordo-code-halo);
+  }
+
+  @supports (anchor-name: --ordo-code-start) and (anchor-scope: --ordo-code-start) and (top: anchor(top)) {
+    .markdown-source-view.mod-cm6 .cm-content {
+      position: relative;
+      anchor-scope: --ordo-code-start, --ordo-code-end;
+    }
+
+    /* Las consultas se limitan a los fences y a las líneas montadas de
+       CodeMirror; no invalidan el documento ni el resto de la interfaz. */
+    .markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg:hover,
+    .markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg:has(~ .HyperMD-codeblock-bg:hover):not(:has(~ .HyperMD-codeblock-end-bg ~ .HyperMD-codeblock-bg:hover)) {
+      anchor-name: --ordo-code-start;
+    }
+
+    .markdown-source-view.mod-cm6 .HyperMD-codeblock-end-bg:hover,
+    .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg:hover:not(.HyperMD-codeblock-end-bg) ~ .HyperMD-codeblock-end-bg:not(.HyperMD-codeblock-bg:hover ~ .HyperMD-codeblock-end-bg ~ .HyperMD-codeblock-end-bg) {
+      anchor-name: --ordo-code-end;
+    }
+
+    .markdown-source-view.mod-cm6 .cm-content::after {
+      content: '';
+      position: absolute;
+      top: anchor(--ordo-code-start top, 0px);
+      bottom: anchor(--ordo-code-end bottom, 0px);
+      left: anchor(--ordo-code-start left, -10000px);
+      width: anchor-size(--ordo-code-start width, 0px);
+      z-index: -1;
+      border-radius: var(--code-radius);
+      box-shadow: var(--ordo-code-halo);
+      opacity: 0;
+      pointer-events: none;
+      /* Conserva los límites anteriores hasta terminar el desvanecido. */
+      transition: opacity var(--ordo-code-halo-duration) var(--ordo-ease),
+        left 0s var(--ordo-code-halo-duration),
+        top 0s var(--ordo-code-halo-duration),
+        bottom 0s var(--ordo-code-halo-duration),
+        width 0s var(--ordo-code-halo-duration);
+    }
+
+    .markdown-source-view.mod-cm6 .cm-content:has(> .HyperMD-codeblock-bg:hover)::after {
+      opacity: 1;
+      transition-delay: 0s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .markdown-rendered pre,
+    .markdown-preview-view pre,
+    .markdown-source-view.mod-cm6 .cm-content {
+      --ordo-code-halo-duration: 0ms;
+    }
+  }
 }
 
 /* Los tokens nativos también unen correctamente los backticks mientras
@@ -1269,6 +1412,250 @@ input.prompt-input:focus-visible {
   border-left-color: rgb(var(--callout-color));
 }
 
+/* El mismo halo del código acompaña avisos, citas y tareas. Dentro de
+   un callout se ilumina su tarjeta, sin sumar halos a cada tarea o cita. */
+@media screen and (hover: hover) {
+  .callout,
+  .markdown-rendered blockquote:not(.callout *),
+  .markdown-preview-view blockquote:not(.callout *),
+  .markdown-rendered .task-list-item:not(.callout *),
+  .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-task-line) {
+    --ordo-block-halo-duration: var(--ordo-duration-normal);
+    transition: box-shadow var(--ordo-block-halo-duration) var(--ordo-ease);
+  }
+
+  /* El widget nativo contiene la pintura y recorta al hacer hover. Dejar
+     espacio para la sombra sin desactivar contain: paint ni cambiar medidas. */
+  .markdown-source-view.mod-cm6 .cm-callout {
+    --embed-block-shadow-hover: none;
+    overflow-clip-margin: 24px;
+  }
+
+  .markdown-source-view.mod-cm6 .cm-embed-block.cm-callout:hover {
+    overflow: visible;
+    border-radius: var(--callout-radius);
+  }
+
+  .callout:hover,
+  .markdown-source-view.mod-cm6 .cm-callout:hover > .markdown-rendered > .callout,
+  .markdown-rendered blockquote:not(.callout *):hover,
+  .markdown-preview-view blockquote:not(.callout *):hover,
+  .markdown-rendered .task-list-item:not(.callout *):hover,
+  .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-task-line):hover {
+    box-shadow: var(--ordo-code-halo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .callout,
+    .markdown-rendered blockquote:not(.callout *),
+    .markdown-preview-view blockquote:not(.callout *),
+    .markdown-rendered .task-list-item:not(.callout *),
+    .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-task-line) {
+      --ordo-block-halo-duration: 0ms;
+    }
+  }
+}
+
+/* PRUEBA · Relieve de bloques. Estado previo completo guardado en
+   .dev/checkpoints/before-block-lift-01/theme.css.
+   Las superficies crecen desde el centro, sin
+   desplazar el bloque hacia arriba ni alterar el flujo de la nota. */
+@media screen and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  body:not(.is-mobile):not(.disable-animations) {
+    --ordo-block-lift-shadow: var(--ordo-shadow-m), var(--ordo-code-halo);
+    --ordo-block-lift-scale: 1.012;
+    --ordo-block-lift-duration: calc(var(--ordo-duration-normal) * 1.5);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .callout,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content {
+    --ordo-block-halo-duration: calc(var(--ordo-duration-normal) * 1.5);
+    --ordo-code-halo-duration: calc(var(--ordo-duration-normal) * 1.5);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .callout:not(.callout *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered :is(pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.callout *):not(blockquote *):not(ul *):not(ol *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-embed-block {
+    transition: box-shadow var(--ordo-block-lift-duration) var(--ordo-ease),
+      scale var(--ordo-block-lift-duration) var(--ordo-ease), opacity 0.25s linear;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-preview-view .callout:not(.callout *):not(.cm-embed-block *):not(.markdown-embed *):not(.file-embed *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered :is(pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.cm-embed-block *):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.cm-embed-block, .image-embed:not(.cm-embed-block *)) {
+    scale: 1;
+    transition: scale var(--ordo-block-lift-duration) var(--ordo-ease),
+      box-shadow var(--ordo-block-lift-duration) var(--ordo-ease), opacity 0.25s linear;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-preview-view .callout:not(.callout *):not(.cm-embed-block *):not(.markdown-embed *):not(.file-embed *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered :is(pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.cm-embed-block *):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-preview-view .markdown-preview-sizer > :is(.el-pre, .el-div, .el-blockquote, .el-table, .el-ul, .el-ol, .el-p):hover :is(.callout, pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.cm-embed-block *):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.cm-embed-block, .image-embed:not(.cm-embed-block *)):hover {
+    scale: var(--ordo-block-lift-scale);
+  }
+
+  /* Las líneas hermanas de código, citas y listas responden juntas al hover,
+     independientemente del cursor de texto. El marco compartido del código
+     mantiene una sola tarjeta, incluidas las filas vacías. */
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line) {
+    position: relative;
+    scale: none;
+    transform-origin: center;
+    transition: scale var(--ordo-edit-hover-duration, var(--ordo-block-lift-duration)) var(--ordo-ease),
+      z-index 0s var(--ordo-code-layer-delay, var(--ordo-block-lift-duration)) allow-discrete;
+  }
+
+  /* El fence inicial contiene controles que sobresalen a las líneas
+     siguientes. Su capa se conserva hasta finalizar la animación de salida. */
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg {
+    z-index: var(--ordo-code-first-layer, auto);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg::before {
+    box-shadow: var(--ordo-code-line-shadow, var(--ordo-shadow-rest));
+    transition: box-shadow 0s var(--ordo-code-layer-delay, var(--ordo-block-lift-duration));
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg {
+    --ordo-edit-row-scale: var(--ordo-block-lift-scale);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg:hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg:has(~ .HyperMD-codeblock-bg:hover):not(.HyperMD-codeblock-end-bg):not(:has(~ .HyperMD-codeblock-end-bg ~ .HyperMD-codeblock-bg:hover)),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg:hover:not(.HyperMD-codeblock-end-bg) ~ .HyperMD-codeblock-bg:not(.HyperMD-codeblock-bg:hover ~ .HyperMD-codeblock-end-bg ~ .HyperMD-codeblock-bg),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):has(~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover):not(:has(~ :not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock)) ~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover)),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover ~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover ~ :not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock)) ~ *) {
+    scale: var(--ordo-edit-hover-scale, var(--ordo-edit-row-scale, var(--ordo-block-lift-scale)));
+    --ordo-code-first-layer: 2;
+    --ordo-code-line-shadow: none;
+    --ordo-code-layer-delay: 0s;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-editor:has(.cm-selectionBackground) {
+    --ordo-edit-hover-scale: none;
+    --ordo-edit-hover-duration: 0ms;
+    --ordo-code-row-factor: 1;
+    --ordo-code-frame-factor: 1;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content > [contenteditable='false'] {
+    overflow-clip-margin: 32px;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-embed-block:not(.cm-table-widget, .cm-lang-base):hover {
+    --embed-block-shadow-hover: none;
+    overflow: clip;
+    overflow-clip-margin: 32px;
+  }
+
+  /* El contenedor nativo es la superficie de activación completa: también
+     cuentan su padding y los márgenes vacíos de la tarjeta interior. Los
+     descendientes de otra tarjeta se elevan con ella, sin duplicar el efecto. */
+  body:not(.is-mobile):not(.disable-animations) .markdown-preview-view .markdown-preview-sizer > :is(.el-pre, .el-div, .el-blockquote, .el-table, .el-ul, .el-ol, .el-p):hover :is(.callout, pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.cm-embed-block *):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-embed-block:hover :is(.callout, pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *),
+  body:not(.is-mobile):not(.disable-animations) .callout:not(.callout *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered :is(pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.callout *):not(blockquote *):not(ul *):not(ol *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .image-embed:not(.cm-embed-block *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-embed-block:not(:has(.callout, pre, blockquote, ul, ol, table, img, video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block)):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-callout:hover > .markdown-rendered > .callout {
+    box-shadow: var(--ordo-block-lift-shadow);
+  }
+
+  /* Las tareas pertenecen a su lista y las citas del editor a su bloque;
+     no sumar una sombra independiente alrededor de cada renglón. */
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered .task-list-item:hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover:not(.active-line-on .cm-active) {
+    box-shadow: none;
+  }
+
+  @supports (anchor-name: --ordo-lift-start) and (anchor-scope: --ordo-lift-start) and (top: anchor(top)) {
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content {
+      anchor-scope: --ordo-code-start, --ordo-code-end, --ordo-lift-start, --ordo-lift-end;
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content::after {
+      /* Un solo fondo y una sola expansión para todas las filas del código. */
+      top: calc(anchor(--ordo-code-start top, 0px) + anchor-size(--ordo-code-start height, 0px) * (1 - 1 / var(--ordo-code-row-factor, var(--ordo-block-lift-scale))) / 2);
+      bottom: calc(anchor(--ordo-code-end bottom, 0px) + anchor-size(--ordo-code-end height, 0px) * (1 - 1 / var(--ordo-code-row-factor, var(--ordo-block-lift-scale))) / 2);
+      background-color: var(--code-background);
+      box-shadow: var(--ordo-block-lift-shadow);
+      scale: 1;
+      transform-origin: center;
+      transition: opacity var(--ordo-code-halo-duration) var(--ordo-ease),
+        scale var(--ordo-edit-hover-duration, var(--ordo-block-lift-duration)) var(--ordo-ease),
+        left 0s var(--ordo-code-halo-duration),
+        top 0s var(--ordo-code-halo-duration),
+        bottom 0s var(--ordo-code-halo-duration),
+        width 0s var(--ordo-code-halo-duration);
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content:has(> .HyperMD-codeblock-bg:hover)::after {
+      scale: 1 var(--ordo-code-frame-factor, var(--ordo-block-lift-scale));
+      transition-delay: 0s;
+    }
+
+    /* Primera y última línea del grupo contiguo bajo el cursor. Las
+       consultas se limitan a las líneas visibles de citas y listas. */
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock) + *):hover,
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock) + *):has(~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover):not(:has(~ :not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock)) ~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover)) {
+      anchor-name: --ordo-lift-start;
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:has(+ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock))):hover,
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover ~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:has(+ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock))):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover ~ :not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock)) ~ *) {
+      anchor-name: --ordo-lift-end;
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock) + *):not(:has(+ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock))):hover {
+      anchor-name: --ordo-lift-start, --ordo-lift-end;
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content::before {
+      content: '';
+      position: absolute;
+      top: anchor(--ordo-lift-start top, 0px);
+      bottom: anchor(--ordo-lift-end bottom, 0px);
+      left: anchor(--ordo-lift-start left, -10000px);
+      width: anchor-size(--ordo-lift-start width, 0px);
+      box-shadow: var(--ordo-block-lift-shadow);
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity var(--ordo-block-lift-duration) var(--ordo-ease),
+        left 0s var(--ordo-block-lift-duration),
+        top 0s var(--ordo-block-lift-duration),
+        bottom 0s var(--ordo-block-lift-duration),
+        width 0s var(--ordo-block-lift-duration);
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content:has(> :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover)::before {
+      opacity: 1;
+      transition-delay: 0s;
+    }
+  }
+}
+
+/* El cursor del navegador sigue la transformación del texto por sí mismo.
+   Se usa en código, citas y listas, también con movimiento reducido o sin
+   animaciones, para que no reaparezca una capa con coordenadas anteriores.
+   El hover del grupo no depende de qué línea contiene el cursor de texto. */
+body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine)) > .cm-scroller > :is(.cm-cursorLayer, .cm-selectionLayer) {
+  visibility: hidden;
+}
+
+/* eslint-disable css/no-important -- CodeMirror oculta el cursor y la selección del navegador con !important. Esta excepción local los restaura solo al editar bloques que se animan. */
+body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine)) .cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line) {
+  caret-color: var(--caret-color) !important;
+}
+
+body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine)) .cm-content::selection,
+body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine)) .cm-content *::selection {
+  background-color: var(--text-selection) !important;
+}
+/* eslint-enable css/no-important */
+
 /* --- Tablas: alineación, celdas, encabezados y controles nativos --- */
 .cm-s-obsidian .HyperMD-table-row span.cm-hmd-table-sep,
 .cm-hmd-table-sep-dummy {
@@ -1276,21 +1663,30 @@ input.prompt-input:focus-visible {
   font-weight: 400;
 }
 
-/* --- Enlaces --- */
-.markdown-preview-view a,
-.markdown-rendered a,
-.cm-editor .cm-hmd-internal-link {
+/* --- Enlaces: subrayado permanente fino y un matiz del acento propio. --- */
+:is(.markdown-preview-view, .markdown-rendered) a[href]:not(.tag):not(.is-unresolved):not(.footnote-link):not(.footnote-backref),
+.cm-s-obsidian :is(span.cm-link, span.cm-hmd-internal-link, span.cm-url):not(.cm-formatting) {
   color: var(--link-color);
-  text-decoration: none;
-  transition: color var(--ordo-duration-normal) var(--ordo-ease);
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+  text-decoration-thickness: var(--link-decoration-thickness);
+  text-underline-offset: 0.18em;
+  text-decoration-skip-ink: auto;
+  transition: color var(--ordo-duration-normal) var(--ordo-ease),
+    text-decoration-color var(--ordo-duration-normal) var(--ordo-ease);
 }
 
-.markdown-preview-view a:hover,
-.markdown-rendered a:hover,
-.cm-editor .cm-hmd-internal-link:hover {
+:is(.markdown-preview-view, .markdown-rendered) a[href]:not(.tag):not(.is-unresolved):not(.footnote-link):not(.footnote-backref):is(:hover, :focus-visible),
+.cm-s-obsidian :is(span.cm-link, span.cm-hmd-internal-link, span.cm-url):not(.cm-formatting):is(:hover, :focus-within) {
   color: var(--link-color-hover);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration-color: currentColor;
+}
+
+/* En Vista previa en vivo el enlace puede estar dentro de un span: se
+   subraya una sola vez y el texto hereda el estado de todo el fragmento. */
+.cm-s-obsidian :is(span.cm-link, span.cm-hmd-internal-link, span.cm-url) a {
+  color: inherit;
+  text-decoration: none;
 }
 
 .external-link {
@@ -1436,6 +1832,13 @@ span[src$="#interface"] img {
    10 · SIDEBAR / NAV — file explorer, backlinks, tags
    ============================================================ */
 
+/* Mismo fondo que la tarjeta LaTeX de LMath: 85% del fondo de la nota y
+   15% de negro, tanto en oscuro como en claro, sin depender del plugin.
+   El mismo token pinta la selección animada y su alternativa nativa. */
+.nav-files-container {
+  --nav-item-background-active: color-mix(in srgb, var(--background-primary) 85%, black);
+}
+
 .nav-file-title,
 .nav-folder-title {
   border-radius: var(--ordo-radius-s);
@@ -1477,6 +1880,140 @@ span[src$="#interface"] img {
   letter-spacing: 0.05em;
   font-size: var(--font-adaptive-smallest);
   color: var(--ordo-c-text-3);
+}
+
+/* Una selección compartida por lista: se desplaza entre filas, conserva
+   la indentación de las carpetas y no modifica la selección múltiple.
+   Cada lista tiene su propia ancla, incluidos menús y paneles divididos. */
+@supports (anchor-name: --ordo-selection) and (anchor-scope: --ordo-selection) and (top: anchor(top)) and (width: anchor-size(width)) {
+  @media (prefers-reduced-motion: no-preference) {
+    body:not(.is-mobile):not(.is-grabbing) :where(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .horizontal-tab-header,
+      .prompt-results,
+      .suggestion-container > .suggestion,
+      .menu-scroll,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content,
+      :is(.mod-left-split, .mod-right-split) .workspace-tab-header-container-inner,
+      .cm-tooltip.cm-tooltip-autocomplete > ul[role='listbox']
+    ) {
+      position: relative;
+      isolation: isolate;
+      anchor-scope: --ordo-selection;
+      --ordo-selection-content: none;
+      --ordo-selection-fill: var(--background-modifier-hover);
+      --ordo-selection-border: transparent;
+      --ordo-selection-border-width: 0px;
+      --ordo-selection-radius: var(--radius-s);
+      --ordo-selection-motion: calc(var(--ordo-duration-normal) * 1.5);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content
+    ) {
+      --ordo-selection-fill: var(--nav-item-background-active);
+      --ordo-selection-border: var(--ordo-c-border-focus);
+      --ordo-selection-border-width: var(--ordo-border-width);
+      --ordo-selection-radius: var(--nav-item-radius);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(.vertical-tab-header-group-container, .setting-search-results, .horizontal-tab-header) {
+      --ordo-selection-radius: var(--radius-m);
+    }
+
+    /* La primera selección aparece directamente en su fila. El pseudo
+       permanece entre cambios y desaparece cuando la lista queda vacía. */
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container:has(:is(.tree-item-self, .nav-file-title, .nav-folder-title).is-active),
+      .vertical-tab-header-group-container:has(.vertical-tab-nav-item.is-active),
+      .setting-search-results:has(.vertical-tab-nav-item.is-active),
+      .horizontal-tab-header:has(.horizontal-tab-nav-item.is-active),
+      .prompt-results:has(.suggestion-item.is-selected:not(.mod-toggle)),
+      .suggestion-container > .suggestion:has(.suggestion-item.is-selected:not(.mod-toggle)),
+      .menu-scroll:has(.menu-item.selected:not(.is-disabled):not(.is-label)),
+      .workspace-leaf-content[data-type='outline'] .view-content:has(.tree-item-self.is-active),
+      .workspace-leaf-content[data-type='bookmarks'] .view-content:has(.tree-item-self.is-active),
+      :is(.mod-left-split, .mod-right-split) .workspace-tab-header-container-inner:has(.workspace-tab-header.is-active),
+      .cm-tooltip.cm-tooltip-autocomplete > ul[role='listbox']:has(:is(.is-selected, [aria-selected='true']))
+    ) {
+      --ordo-selection-content: '';
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .horizontal-tab-header,
+      .prompt-results,
+      .suggestion-container > .suggestion,
+      .menu-scroll,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content,
+      :is(.mod-left-split, .mod-right-split) .workspace-tab-header-container-inner,
+      .cm-tooltip.cm-tooltip-autocomplete > ul[role='listbox']
+    )::after {
+      content: var(--ordo-selection-content);
+      position: absolute;
+      position-anchor: --ordo-selection;
+      left: anchor(left, -10000px);
+      top: anchor(top, 0px);
+      width: anchor-size(width, 0px);
+      height: anchor-size(height, 0px);
+      box-sizing: border-box;
+      border: var(--ordo-selection-border-width) solid var(--ordo-selection-border);
+      border-radius: var(--ordo-selection-radius);
+      corner-shape: var(--corner-shape, round);
+      background: var(--ordo-selection-fill);
+      background-clip: padding-box;
+      pointer-events: none;
+      z-index: -1;
+      transition: left var(--ordo-selection-motion) var(--ordo-ease),
+        top var(--ordo-selection-motion) var(--ordo-ease),
+        width var(--ordo-selection-motion) var(--ordo-ease),
+        height var(--ordo-selection-motion) var(--ordo-ease);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .horizontal-tab-header,
+      .prompt-results,
+      .suggestion-container > .suggestion,
+      .menu-scroll,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content,
+      :is(.mod-left-split, .mod-right-split) .workspace-tab-header-container-inner,
+      .cm-tooltip.cm-tooltip-autocomplete > ul[role='listbox']
+    ) :is(
+      .tree-item-self.is-active,
+      .nav-file-title.is-active,
+      .nav-folder-title.is-active,
+      .vertical-tab-nav-item.is-active,
+      .horizontal-tab-nav-item.is-active,
+      .suggestion-item.is-selected:not(.mod-toggle),
+      .menu-item.selected:not(.is-disabled):not(.is-label),
+      .workspace-tab-header.is-active,
+      [role='tab'][aria-selected='true'],
+      [role='option'][aria-selected='true']
+    ) {
+      anchor-name: --ordo-selection;
+      background-color: transparent;
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content
+    ) :is(.nav-file-title, .nav-folder-title, .tree-item-self).is-active::after {
+      display: none;
+    }
+  }
 }
 
 .nav-file-tag {
