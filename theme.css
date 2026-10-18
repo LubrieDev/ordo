@@ -101,8 +101,8 @@ body {
   --ordo-gutter: 14px;
 
   /* --- Divisor entre paneles --- */
-  --ordo-divider: transparent;
-  --ordo-divider-hover: var(--ordo-border-focus);
+  --ordo-divider: var(--ordo-c-border-rest);
+  --ordo-divider-hover: var(--ordo-c-border-focus);
 
   /* --- Sombras --- */
   --ordo-shadow-xs: 0 1px 2px rgb(0 0 0 / 0.12);
@@ -366,13 +366,17 @@ body {
   --titlebar-background: var(--ordo-c-bg-base);
   --titlebar-background-focused: var(--ordo-c-bg-surface);
   --titlebar-text-color-focused: var(--ordo-c-text-1);
-  --divider-color: transparent;
+  --divider-color: var(--ordo-divider);
+  --divider-color-hover: var(--ordo-divider-hover);
+  --divider-width: var(--ordo-border-width);
+  --divider-width-hover: var(--ordo-space-4);
   --frame-divider-color: transparent;
   --tab-outline-color: var(--ordo-c-border-rest);
   --workspace-background-translucent: hsl(var(--ordo-h), var(--ordo-s), var(--ordo-l) / 0.85);
 
   /* --- Navegación --- */
-  --nav-item-padding: 7px 10px;
+  --ordo-nav-padding-inline: 10px;
+  --nav-item-padding: 7px var(--ordo-nav-padding-inline);
   --nav-item-parent-spacing: 2px;
   --nav-item-children-padding-left: 14px;
   --nav-item-color: var(--ordo-c-text-2);
@@ -607,33 +611,22 @@ body {
   background: var(--ordo-c-bg-base);
 }
 
-/* Divisor entre paneles — oculto en reposo.
-   El handle queda siempre interactivo para redimensionar. */
+/* Divisor visible en reposo, con una zona de agarre más ancha.
+   Obsidian conserva la posición y orientación de cada separador. */
 .workspace-leaf-resize-handle,
 .workspace-sidedock-resize-handle {
   background: none;
-  border: none;
+  border-color: var(--ordo-divider);
   box-shadow: none;
-  filter: opacity(0);
-  transition: background-color var(--ordo-duration-fast) var(--ordo-ease);
+  transition: border-color var(--ordo-duration-fast) var(--ordo-ease);
 }
 
 .workspace-leaf-resize-handle:hover,
-.workspace-sidedock-resize-handle:hover {
-  --divider-color: transparent;
-  --frame-divider-color: transparent;
-  filter: opacity(0);
-}
-
-.workspace-split.mod-vertical > .workspace-leaf > .workspace-leaf-resize-handle,
-.workspace-sidedock-resize-handle {
-  width: 8px;
-  right: -4px;
-}
-
-.workspace-split.mod-horizontal > .workspace-leaf > .workspace-leaf-resize-handle {
-  height: 12px;
-  bottom: -6px;
+.workspace-sidedock-resize-handle:hover,
+.workspace-leaf-resize-handle.is-active,
+.workspace-sidedock-resize-handle.is-active {
+  background: none;
+  border-color: var(--ordo-divider-hover);
 }
 
 /* REPOSO */
@@ -901,6 +894,85 @@ body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-
   }
 }
 
+/* --- Tarjetas de ajustes --- */
+/* Obsidian conserva las agrupaciones, el ancho y la unión entre buscador
+   y lista. Cada opción tiene su propia superficie dentro del marco. */
+.modal.mod-settings {
+  --setting-items-background: var(--ordo-c-bg-surface);
+  --setting-items-border-width: var(--ordo-border-width);
+  --setting-items-border-color: var(--ordo-c-border-rest);
+  --setting-items-radius: var(--ordo-radius-m);
+}
+
+.modal.mod-settings :is(.setting-items, .setting-group-search, .setting-item) {
+  background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal.mod-settings :is(.setting-items, .setting-group-search, .setting-item) {
+    transition: border-color var(--ordo-duration-normal) var(--ordo-ease);
+  }
+
+  .modal.mod-settings .setting-item > .setting-item-info {
+    transition: opacity var(--ordo-duration-normal) var(--ordo-ease);
+  }
+}
+
+/* La consulta se limita a los hijos que forman la tarjeta: el título y
+   su separación exterior no activan el marco. Buscador y lista lo comparten. */
+.modal.mod-settings .setting-group:has(> :is(.setting-items, .setting-group-search):is(:hover, :focus-within)),
+.modal.mod-settings .setting-item:where(:not(.setting-group *)):focus-within {
+  --setting-items-border-color: var(--ordo-c-border-focus);
+}
+
+/* La separación deja espacio al relieve sin mover las opciones vecinas. */
+.modal.mod-settings .setting-group > .setting-items:not(:empty) {
+  --setting-items-divider-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ordo-space-4);
+  padding: var(--ordo-space-4);
+}
+
+.modal.mod-settings .setting-item:not(.setting-item-heading, .mod-empty-state),
+.modal.mod-settings .setting-group .setting-items > .setting-item:not(.setting-item-heading, .mod-empty-state) {
+  background-color: var(--code-background);
+  border-radius: var(--ordo-radius-s);
+  box-shadow: var(--ordo-shadow-rest);
+}
+
+@media (hover: hover) {
+  .modal.mod-settings .setting-item:where(:not(.setting-group *)):hover {
+    --setting-items-border-color: var(--ordo-c-border-focus);
+  }
+
+  /* En pantallas táctiles el texto conserva su claridad habitual. */
+  .modal.mod-settings .setting-item:not(.setting-item-heading, .is-disabled, .mod-empty-state) > .setting-item-info {
+    opacity: 0.7;
+  }
+
+  .modal.mod-settings .setting-item:not(.setting-item-heading, .is-disabled, .mod-empty-state):is(:hover, :focus-within) > .setting-item-info {
+    opacity: 1;
+  }
+}
+
+/* Misma escala, sombra y duración que los bloques de las notas. El marco
+   exterior permanece fijo y el fondo, el texto y los controles crecen juntos. */
+@media screen and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  body:not(.is-mobile):not(.disable-animations) .modal.mod-settings .setting-item:not(.setting-item-heading, .is-disabled, .mod-empty-state) {
+    scale: 1;
+    transition: scale var(--ordo-block-lift-duration) var(--ordo-ease),
+      box-shadow var(--ordo-block-lift-duration) var(--ordo-ease),
+      border-color var(--ordo-duration-normal) var(--ordo-ease);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .modal.mod-settings .setting-item:not(.setting-item-heading, .is-disabled, .mod-empty-state):hover {
+    scale: var(--ordo-block-lift-scale);
+    box-shadow: var(--ordo-block-lift-shadow);
+    z-index: 1;
+  }
+}
+
 /* --- Inputs, botones --- */
 input[type='text'],
 input[type='search'],
@@ -944,6 +1016,110 @@ button:focus-visible {
   border-color: var(--ordo-c-border-focus);
   box-shadow: var(--ordo-shadow-focus);
   color: var(--ordo-c-text-1);
+}
+
+/* Los selectores de escritorio usan el picker personalizable de Chromium.
+   El botón conserva su flecha y ajusta el ancho a su etiqueta actual.
+   En móvil y en motores anteriores se conserva el selector del sistema. */
+@supports (appearance: base-select) and selector(select::picker(select)) {
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]),
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker(select) {
+    appearance: base-select;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker-icon {
+    display: none;
+  }
+
+  /* El botón cerrado no comparte el ajuste de línea de las opciones.
+     También contiene etiquetas largas si el control debe encogerse. */
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) {
+    align-items: center;
+    inline-size: max-content;
+    min-inline-size: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker(select) {
+    position-area: block-end span-inline-start;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    inset: auto;
+    justify-self: end;
+    min-inline-size: anchor-size(width);
+    inline-size: max-content;
+    max-inline-size: min(calc(100vw - var(--ordo-space-9)), calc(100% - var(--ordo-space-6)));
+    max-block-size: min(360px, calc(100dvh - var(--ordo-space-9)));
+    margin-block: var(--ordo-space-2);
+    padding: var(--ordo-space-2);
+    border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
+    border-radius: var(--ordo-radius-m);
+    corner-shape: var(--corner-shape, round);
+    background: var(--ordo-c-bg-surface);
+    background-clip: padding-box;
+    color: var(--ordo-c-text-1);
+    box-shadow: var(--ordo-shadow-focus);
+    overflow: auto;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option {
+    display: flex;
+    align-items: center;
+    gap: var(--ordo-space-4);
+    padding: var(--ordo-space-3) var(--ordo-space-5);
+    border: var(--ordo-border-width) solid transparent;
+    border-radius: var(--ordo-radius-s);
+    background: transparent;
+    color: var(--ordo-c-text-2);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:checked {
+    border-color: var(--ordo-c-border-focus);
+    background-color: color-mix(in srgb, var(--background-primary) 85%, #000);
+    color: var(--ordo-c-text-1);
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:where(:not(:disabled)):is(:hover, :focus-visible) {
+    background-color: var(--ordo-c-bg-hover);
+    color: var(--ordo-c-text-1);
+    outline: none;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:disabled {
+    color: var(--ordo-c-text-faint);
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option::checkmark {
+    order: 1;
+    margin-inline-start: auto;
+    color: var(--ordo-c-text-1);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option {
+      transition: var(--ordo-transition);
+    }
+
+    body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker(select) {
+      opacity: 0;
+      transition: opacity calc(var(--ordo-duration-normal) * 2) var(--ordo-ease),
+        display calc(var(--ordo-duration-normal) * 2) allow-discrete,
+        overlay calc(var(--ordo-duration-normal) * 2) allow-discrete;
+    }
+
+    body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]):open::picker(select) {
+      opacity: 1;
+    }
+
+    @starting-style {
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]):open::picker(select) {
+        opacity: 0;
+      }
+    }
+  }
 }
 
 input:focus:not(:focus-visible),
@@ -1313,7 +1489,21 @@ input.prompt-input:focus-visible {
   line-height: inherit;
 }
 
-/* Math block - Obsidian/MathJax conserva su estilo nativo. */
+/* En lectura, la tarjeta contiene también las fórmulas más anchas que la
+   nota. Solo su contenido se desplaza: el marco y el relieve la rodean. */
+.markdown-preview-view .math-block {
+  display: block;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown-preview-view .math-block > mjx-container[display='true'] {
+  min-inline-size: max-content;
+  margin-block: 0;
+  padding-block: 1em;
+}
 
 /* --- Citas --- */
 .markdown-rendered blockquote,
@@ -1646,11 +1836,11 @@ body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm
 }
 
 /* eslint-disable css/no-important -- CodeMirror oculta el cursor y la selección del navegador con !important. Esta excepción local los restaura solo al editar bloques que se animan. */
-body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine)) .cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line) {
+/* La línea activa identifica el cursor sin consultar los demás renglones. */
+body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused .cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine) {
   caret-color: var(--caret-color) !important;
 }
 
-body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine)) .cm-content::selection,
 body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine)) .cm-content *::selection {
   background-color: var(--text-selection) !important;
 }
@@ -1666,20 +1856,18 @@ body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm
 /* --- Enlaces: subrayado permanente fino y un matiz del acento propio. --- */
 :is(.markdown-preview-view, .markdown-rendered) a[href]:not(.tag):not(.is-unresolved):not(.footnote-link):not(.footnote-backref),
 .cm-s-obsidian :is(span.cm-link, span.cm-hmd-internal-link, span.cm-url):not(.cm-formatting) {
+  --ordo-link-underline-color: color-mix(in srgb, currentColor 55%, transparent);
   color: var(--link-color);
-  text-decoration-line: underline;
-  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
-  text-decoration-thickness: var(--link-decoration-thickness);
+  text-decoration: underline solid var(--ordo-link-underline-color) var(--link-decoration-thickness);
   text-underline-offset: 0.18em;
-  text-decoration-skip-ink: auto;
   transition: color var(--ordo-duration-normal) var(--ordo-ease),
     text-decoration-color var(--ordo-duration-normal) var(--ordo-ease);
 }
 
 :is(.markdown-preview-view, .markdown-rendered) a[href]:not(.tag):not(.is-unresolved):not(.footnote-link):not(.footnote-backref):is(:hover, :focus-visible),
 .cm-s-obsidian :is(span.cm-link, span.cm-hmd-internal-link, span.cm-url):not(.cm-formatting):is(:hover, :focus-within) {
+  --ordo-link-underline-color: currentColor;
   color: var(--link-color-hover);
-  text-decoration-color: currentColor;
 }
 
 /* En Vista previa en vivo el enlace puede estar dentro de un span: se
@@ -1835,8 +2023,95 @@ span[src$="#interface"] img {
 /* Mismo fondo que la tarjeta LaTeX de LMath: 85% del fondo de la nota y
    15% de negro, tanto en oscuro como en claro, sin depender del plugin.
    El mismo token pinta la selección animada y su alternativa nativa. */
+.nav-files-container,
+.modal.mod-settings .vertical-tab-header {
+  --nav-item-background-active: color-mix(in srgb, var(--background-primary) 85%, #000);
+}
+
+/* Los puntos siguen la guía real de su carpeta, incluso cuando Obsidian
+   extiende la fila hacia la izquierda para pintar la selección completa. */
 .nav-files-container {
-  --nav-item-background-active: color-mix(in srgb, var(--background-primary) 85%, black);
+  --ordo-nav-dot-size: 8px;
+  --ordo-nav-dot-color: var(--ordo-c-border-rest);
+}
+
+.nav-files-container .nav-file-title.is-active {
+  --ordo-nav-dot-color: var(--ordo-c-text-1);
+}
+
+@supports (anchor-name: --ordo-explorer-label) and (anchor-scope: --ordo-explorer-label) {
+  /* La guía une los centros de la primera y la última fila. El borde
+     transparente conserva la indentación nativa, sin prolongar sus extremos. */
+  .nav-files-container .nav-folder-children {
+    position: relative;
+    border-inline-start-color: transparent;
+    anchor-scope: --ordo-guide-first, --ordo-guide-last;
+  }
+
+  .nav-files-container .nav-folder-children::after {
+    content: '';
+    position: absolute;
+    inset-block-start: anchor(--ordo-guide-first center, 50%);
+    inset-block-end: anchor(--ordo-guide-last center, 50%);
+    inset-inline-start: calc(0px - var(--nav-indentation-guide-width));
+    inline-size: var(--nav-indentation-guide-width);
+    border-radius: var(--ordo-radius-full);
+    background-color: var(--nav-indentation-guide-color);
+    pointer-events: none;
+  }
+
+  .nav-files-container .nav-file-title {
+    anchor-scope: --ordo-explorer-label;
+  }
+
+  .nav-files-container .nav-file-title-content {
+    anchor-name: --ordo-explorer-label;
+  }
+
+  .nav-files-container .nav-folder-children > :nth-child(1 of .tree-item:not(.is-filtered-out)) > .tree-item-self > .tree-item-inner {
+    anchor-name: --ordo-explorer-label, --ordo-guide-first;
+  }
+
+  .nav-files-container .nav-folder-children > :nth-last-child(1 of .tree-item:not(.is-filtered-out)) > .tree-item-self > .tree-item-inner {
+    anchor-name: --ordo-explorer-label, --ordo-guide-last;
+  }
+
+  .nav-files-container .nav-folder-children > :nth-child(1 of .tree-item:not(.is-filtered-out)):nth-last-child(1 of .tree-item:not(.is-filtered-out)) > .tree-item-self > .tree-item-inner {
+    anchor-name: --ordo-explorer-label, --ordo-guide-first, --ordo-guide-last;
+  }
+
+  .nav-files-container .nav-folder-children > .nav-file > .nav-file-title > .nav-file-title-content::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 50%;
+    inset-inline-start: calc(anchor(--ordo-explorer-label start) - var(--nav-item-children-padding-start, var(--nav-item-children-padding-left)) - var(--ordo-nav-padding-inline) - var(--nav-indentation-guide-width) / 2 - var(--ordo-nav-dot-size) / 2);
+    inline-size: var(--ordo-nav-dot-size);
+    block-size: var(--ordo-nav-dot-size);
+    border-radius: var(--ordo-radius-full);
+    background-color: var(--ordo-nav-dot-color);
+    translate: 0 -50%;
+    pointer-events: none;
+  }
+
+  /* Una rama corta llega hasta la etiqueta sin entrar en sus letras. */
+  .nav-files-container .nav-folder-children > .nav-file > .nav-file-title > .nav-file-title-content::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: calc(anchor(--ordo-explorer-label start) - var(--nav-item-children-padding-start, var(--nav-item-children-padding-left)) - var(--ordo-nav-padding-inline) - var(--nav-indentation-guide-width) / 2 + var(--ordo-nav-dot-size) / 2);
+    inset-inline-end: calc(anchor(--ordo-explorer-label start) + var(--ordo-space-1));
+    block-size: var(--nav-indentation-guide-width);
+    background-color: var(--nav-indentation-guide-color);
+    translate: 0 -50%;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nav-files-container .nav-file-title-content::before {
+      transition: background-color var(--ordo-duration-normal) var(--ordo-ease);
+    }
+  }
 }
 
 .nav-file-title,
@@ -1846,15 +2121,39 @@ span[src$="#interface"] img {
   transition: var(--ordo-transition);
 }
 
+.modal.mod-settings .vertical-tab-nav-item {
+  border-radius: var(--nav-item-radius);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal.mod-settings .vertical-tab-nav-item {
+    transition: var(--ordo-transition);
+  }
+}
+
 .nav-file-title:hover,
 .nav-folder-title:hover {
   background: var(--nav-item-background-hover);
   color: var(--nav-item-color-hover);
 }
 
+.modal.mod-settings .vertical-tab-nav-item.is-active {
+  background-color: var(--nav-item-background-active);
+  color: var(--nav-item-color-active);
+}
+
+@media (hover: hover) {
+  body:not(.is-grabbing) .nav-files-container :is(.nav-file-title, .nav-folder-title):not(.is-active):hover,
+  .modal.mod-settings .vertical-tab-nav-item:not(.is-active):hover {
+    background-color: var(--nav-item-background-hover);
+    color: var(--nav-item-color-hover);
+  }
+}
+
 .nav-file-title.is-active,
 .nav-folder-title.is-active,
-.tree-item-self.is-active {
+.tree-item-self.is-active,
+.modal.mod-settings .vertical-tab-nav-item.is-active {
   position: relative;
   box-shadow: none;
 }
@@ -1863,7 +2162,8 @@ span[src$="#interface"] img {
    Evita la arista tenue que dejaba la sombra interior de selección. */
 .nav-file-title.is-active::after,
 .nav-folder-title.is-active::after,
-.tree-item-self.is-active::after {
+.tree-item-self.is-active::after,
+.modal.mod-settings .vertical-tab-nav-item.is-active::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -1876,7 +2176,7 @@ span[src$="#interface"] img {
 
 .nav-folder-title-content {
   font-weight: 500;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.05em;
   font-size: var(--font-adaptive-smallest);
   color: var(--ordo-c-text-3);
@@ -1885,7 +2185,7 @@ span[src$="#interface"] img {
 /* Una selección compartida por lista: se desplaza entre filas, conserva
    la indentación de las carpetas y no modifica la selección múltiple.
    Cada lista tiene su propia ancla, incluidos menús y paneles divididos. */
-@supports (anchor-name: --ordo-selection) and (anchor-scope: --ordo-selection) and (top: anchor(top)) and (width: anchor-size(width)) {
+@supports (anchor-name: --ordo-selection) and (anchor-scope: --ordo-selection) and (top: anchor(top)) and (width: anchor-size(width)) and (position-visibility: anchors-visible) {
   @media (prefers-reduced-motion: no-preference) {
     body:not(.is-mobile):not(.is-grabbing) :where(
       .nav-files-container,
@@ -1903,7 +2203,7 @@ span[src$="#interface"] img {
       position: relative;
       isolation: isolate;
       anchor-scope: --ordo-selection;
-      --ordo-selection-content: none;
+      --ordo-selection-content: '';
       --ordo-selection-fill: var(--background-modifier-hover);
       --ordo-selection-border: transparent;
       --ordo-selection-border-width: 0px;
@@ -1913,34 +2213,31 @@ span[src$="#interface"] img {
 
     body:not(.is-mobile):not(.is-grabbing) :is(
       .nav-files-container,
+      .modal.mod-settings .vertical-tab-header-group-container,
+      .modal.mod-settings .setting-search-results,
       .workspace-leaf-content[data-type='outline'] .view-content,
       .workspace-leaf-content[data-type='bookmarks'] .view-content
     ) {
+      --ordo-selection-content: none;
       --ordo-selection-fill: var(--nav-item-background-active);
       --ordo-selection-border: var(--ordo-c-border-focus);
       --ordo-selection-border-width: var(--ordo-border-width);
       --ordo-selection-radius: var(--nav-item-radius);
     }
 
-    body:not(.is-mobile):not(.is-grabbing) :is(.vertical-tab-header-group-container, .setting-search-results, .horizontal-tab-header) {
+    body:not(.is-mobile):not(.is-grabbing) :is(.vertical-tab-header-group-container, .setting-search-results, .horizontal-tab-header):where(:not(.modal.mod-settings *)) {
       --ordo-selection-radius: var(--radius-m);
     }
 
-    /* La primera selección aparece directamente en su fila. El pseudo
-       permanece entre cambios y desaparece cuando la lista queda vacía. */
+    /* Las listas con borde necesitan eliminar el cuadro vacío.
+       Las demás listas usan el tamaño y la visibilidad del ancla. */
     body:not(.is-mobile):not(.is-grabbing) :is(
-      .nav-files-container:has(:is(.tree-item-self, .nav-file-title, .nav-folder-title).is-active),
-      .vertical-tab-header-group-container:has(.vertical-tab-nav-item.is-active),
-      .setting-search-results:has(.vertical-tab-nav-item.is-active),
-      .horizontal-tab-header:has(.horizontal-tab-nav-item.is-active),
-      .prompt-results:has(.suggestion-item.is-selected:not(.mod-toggle)),
-      .suggestion-container > .suggestion:has(.suggestion-item.is-selected:not(.mod-toggle)),
-      .menu-scroll:has(.menu-item.selected:not(.is-disabled):not(.is-label)),
-      .workspace-leaf-content[data-type='outline'] .view-content:has(.tree-item-self.is-active),
-      .workspace-leaf-content[data-type='bookmarks'] .view-content:has(.tree-item-self.is-active),
-      :is(.mod-left-split, .mod-right-split) .workspace-tab-header-container-inner:has(.workspace-tab-header.is-active),
-      .cm-tooltip.cm-tooltip-autocomplete > ul[role='listbox']:has(:is(.is-selected, [aria-selected='true']))
-    ) {
+      .nav-files-container,
+      .modal.mod-settings .vertical-tab-header-group-container,
+      .modal.mod-settings .setting-search-results,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content
+    ):has(:is(.tree-item-self, .nav-file-title, .nav-folder-title, .vertical-tab-nav-item).is-active) {
       --ordo-selection-content: '';
     }
 
@@ -1960,10 +2257,12 @@ span[src$="#interface"] img {
       content: var(--ordo-selection-content);
       position: absolute;
       position-anchor: --ordo-selection;
-      left: anchor(left, -10000px);
-      top: anchor(top, 0px);
-      width: anchor-size(width, 0px);
-      height: anchor-size(height, 0px);
+      position-visibility: anchors-visible;
+      /* Sin ancla, auto evita interpolar desde fuera de la lista. */
+      left: anchor(left);
+      top: anchor(top);
+      width: anchor-size(width);
+      height: anchor-size(height);
       box-sizing: border-box;
       border: var(--ordo-selection-border-width) solid var(--ordo-selection-border);
       border-radius: var(--ordo-selection-radius);
@@ -2008,9 +2307,11 @@ span[src$="#interface"] img {
 
     body:not(.is-mobile):not(.is-grabbing) :is(
       .nav-files-container,
+      .modal.mod-settings .vertical-tab-header-group-container,
+      .modal.mod-settings .setting-search-results,
       .workspace-leaf-content[data-type='outline'] .view-content,
       .workspace-leaf-content[data-type='bookmarks'] .view-content
-    ) :is(.nav-file-title, .nav-folder-title, .tree-item-self).is-active::after {
+    ) :is(.nav-file-title, .nav-folder-title, .tree-item-self, .vertical-tab-nav-item).is-active::after {
       display: none;
     }
   }
