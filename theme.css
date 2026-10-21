@@ -1328,6 +1328,12 @@ input.prompt-input:focus-visible {
   color: var(--text-normal);
 }
 
+/* El HTML inline del editor usa el mismo resaltado que lectura. */
+.markdown-source-view.mod-cm6 mark {
+  background-color: var(--text-highlight-bg);
+  color: var(--text-normal);
+}
+
 /* Encabezados, listas y párrafos conservan la distribución nativa. */
 /* Formato markdown */
 .cm-formatting:not(.cm-formatting-code-block):not(.cm-formatting-hashtag) {
@@ -1703,8 +1709,21 @@ input.prompt-input:focus-visible {
   }
 
   body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg::before {
+    /* El solape opaco cubre las juntas subpíxel durante toda la transición,
+       incluso mientras el fondo compartido aparece o desaparece. */
+    top: -1px;
+    bottom: -1px;
+    background-color: var(--code-background);
     box-shadow: var(--ordo-code-line-shadow, var(--ordo-shadow-rest));
     transition: box-shadow 0s var(--ordo-code-layer-delay, var(--ordo-block-lift-duration));
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg::before {
+    top: 0;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-end-bg::before {
+    bottom: 0;
   }
 
   body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg {
@@ -2174,6 +2193,15 @@ span[src$="#interface"] img {
   pointer-events: none;
 }
 
+/* Volver a pulsar una nota abierta añade has-focus en el explorador.
+   Ese estado usa el color del contorno como relleno, sin sumar otra sombra. */
+body:not(.is-phone) .workspace-leaf.mod-active .nav-files-container .tree-item-self.has-focus:not(.is-being-renamed) {
+  --ordo-nav-focused-fill: var(--ordo-c-border-focus);
+  background-color: var(--ordo-nav-focused-fill);
+  color: var(--text-on-accent);
+  box-shadow: none;
+}
+
 .nav-folder-title-content {
   font-weight: 500;
   text-transform: none;
@@ -2302,7 +2330,7 @@ span[src$="#interface"] img {
       [role='option'][aria-selected='true']
     ) {
       anchor-name: --ordo-selection;
-      background-color: transparent;
+      background-color: var(--ordo-nav-focused-fill, transparent);
     }
 
     body:not(.is-mobile):not(.is-grabbing) :is(
@@ -2313,6 +2341,218 @@ span[src$="#interface"] img {
       .workspace-leaf-content[data-type='bookmarks'] .view-content
     ) :is(.nav-file-title, .nav-folder-title, .tree-item-self, .vertical-tab-nav-item).is-active::after {
       display: none;
+    }
+  }
+}
+
+/* El hover comparte una superficie por grupo, igual que los menús.
+   Se mantiene separado de la selección: el cursor puede recorrer otras
+   opciones sin mover el contorno de la nota o del ajuste activo. */
+@supports (anchor-name: --ordo-hover) and (anchor-scope: --ordo-hover) and (top: anchor(top)) and (width: anchor-size(width)) and (position-visibility: anchors-visible) and (transition: anchor-name 0s calc(infinity * 1s) allow-discrete) {
+  @media screen and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .horizontal-tab-header,
+      .workspace-leaf-content:is([data-type='outline'], [data-type='bookmarks'], [data-type='all-properties']) .view-content,
+      .tag-container,
+      .backlink-pane,
+      .outgoing-link-pane,
+      .search-result-container,
+      .workspace-tab-header-container-inner,
+      .nav-buttons-container,
+      .view-actions,
+      .view-header-nav-buttons,
+      .side-dock-actions,
+      .side-dock-settings,
+      .modal-button-container,
+      .setting-item-control,
+      .status-bar
+    ) {
+      /* El ámbito de selección existente sigue siendo independiente. */
+      anchor-scope: --ordo-selection, --ordo-hover;
+      isolation: isolate;
+      --ordo-hover-fill: var(--background-modifier-hover);
+      --ordo-hover-radius: var(--radius-s);
+      --ordo-hover-motion: calc(var(--ordo-duration-normal) * 1.5);
+      --ordo-hover-row-transition: var(--ordo-transition);
+
+      /* En los huecos se retiene la última ancla, como .selected en un
+         menú. El cambio discreto no termina mientras siga en este grupo.
+         Al entrar en otra fila se cancela antes de asignar la nueva ancla;
+         así también funciona al subir, sin dos referencias simultáneas. */
+      &:hover {
+        --ordo-hover-row-transition: var(--ordo-transition),
+          anchor-name 0s calc(infinity * 1s) allow-discrete;
+      }
+
+      &:has(:is(
+        .tree-item-self,
+        .nav-file-title,
+        .nav-folder-title,
+        .vertical-tab-nav-item,
+        .horizontal-tab-nav-item,
+        .workspace-tab-header,
+        .search-result-file-title,
+        .search-result-file-match,
+        :is(.nav-buttons-container, .view-actions, .view-header-nav-buttons, .side-dock-actions, .side-dock-settings, .setting-item-control, .modal-button-container) .clickable-icon,
+        .status-bar-item:is(.mod-clickable, .plugin-editor-status, .plugin-sync),
+        :is(.setting-item-control, .modal-button-container) button:not(.mod-cta, .mod-warning)
+      ):not(.is-disabled, :disabled, [aria-disabled='true']):hover) {
+        --ordo-hover-row-transition: var(--ordo-transition);
+      }
+
+      &:not(.status-bar, .mod-root .workspace-tab-header-container-inner) {
+        position: relative;
+      }
+
+      /* La búsqueda reserva ::before para su indicador de carga. */
+      &:not(.search-result-container)::before,
+      &.search-result-container::after {
+        content: '';
+        position: absolute;
+        position-anchor: --ordo-hover;
+        position-visibility: anchors-visible;
+        left: anchor(left);
+        top: anchor(top);
+        width: anchor-size(width);
+        height: anchor-size(height);
+        border-radius: var(--ordo-hover-radius);
+        corner-shape: var(--corner-shape, round);
+        background-color: var(--ordo-hover-fill);
+        pointer-events: none;
+        z-index: -1;
+        transition: left var(--ordo-hover-motion) var(--ordo-ease),
+          top var(--ordo-hover-motion) var(--ordo-ease),
+          width var(--ordo-hover-motion) var(--ordo-ease),
+          height var(--ordo-hover-motion) var(--ordo-ease);
+      }
+
+      /* Las filas conservan su selección, foco y controles nativos.
+         Solo el fondo de hover pasa a la superficie compartida. */
+      & :is(
+        .tree-item-self,
+        .nav-file-title,
+        .nav-folder-title,
+        .vertical-tab-nav-item,
+        .horizontal-tab-nav-item,
+        .workspace-tab-header,
+        .search-result-file-title,
+        .search-result-file-match,
+        :is(.nav-buttons-container, .view-actions, .view-header-nav-buttons, .side-dock-actions, .side-dock-settings, .setting-item-control, .modal-button-container) .clickable-icon,
+        .status-bar-item:is(.mod-clickable, .plugin-editor-status, .plugin-sync),
+        :is(.setting-item-control, .modal-button-container) button:not(.mod-cta, .mod-warning)
+      ):not(.is-disabled, :disabled, [aria-disabled='true']) {
+        transition: var(--ordo-hover-row-transition);
+
+        &:hover {
+          anchor-name: --ordo-hover;
+          background-color: var(--ordo-nav-focused-fill, transparent);
+
+          &:is(.is-active, [aria-selected='true']) {
+            anchor-name: --ordo-selection, --ordo-active-tab, --ordo-hover;
+          }
+
+          &.tag-pane-tag.is-active {
+            background-color: var(--interactive-accent);
+          }
+
+          &.tree-item-self.is-selected {
+            background-color: var(--ordo-nav-focused-fill, var(--nav-item-background-selected));
+          }
+
+          &.workspace-tab-header > .workspace-tab-header-inner {
+            background-color: transparent;
+          }
+        }
+      }
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .workspace-leaf-content:is([data-type='outline'], [data-type='bookmarks'], [data-type='all-properties']) .view-content,
+      .tag-container,
+      .backlink-pane,
+      .outgoing-link-pane
+    ) {
+      --ordo-hover-fill: var(--nav-item-background-hover);
+      --ordo-hover-radius: var(--nav-item-radius);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(.vertical-tab-header-group-container, .setting-search-results, .horizontal-tab-header):where(:not(.modal.mod-settings *)) {
+      --ordo-hover-radius: var(--radius-m);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .workspace-tab-header-container-inner {
+      --ordo-hover-radius: var(--tab-radius);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-buttons-container,
+      .view-actions,
+      .view-header-nav-buttons,
+      .side-dock-actions,
+      .side-dock-settings,
+      .setting-item-control,
+      .modal-button-container
+    ) {
+      --ordo-hover-fill: var(--ordo-c-bg-hover);
+      --ordo-hover-radius: var(--ordo-radius-s);
+    }
+
+    /* Las opciones del picker viven en la capa superior del navegador;
+       su superficie debe pertenecer al propio picker, no al botón. */
+    @supports (appearance: base-select) and selector(select::picker(select)) {
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) {
+        anchor-scope: --ordo-option-hover;
+        --ordo-option-row-transition: var(--ordo-transition);
+
+        &:open {
+          --ordo-option-row-transition: var(--ordo-transition),
+            anchor-name 0s calc(infinity * 1s) allow-discrete;
+        }
+
+        &:has(option:not(:disabled):hover) {
+          --ordo-option-row-transition: var(--ordo-transition);
+        }
+      }
+
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option {
+        transition: var(--ordo-option-row-transition);
+      }
+
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker(select) {
+        isolation: isolate;
+      }
+
+      /* Un único pseudoelemento dentro del picker sirve a sus opciones. */
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:first-of-type::before {
+        content: '';
+        position: absolute;
+        position-anchor: --ordo-option-hover;
+        position-visibility: anchors-visible;
+        left: anchor(left);
+        top: anchor(top);
+        width: anchor-size(width);
+        height: anchor-size(height);
+        border-radius: var(--ordo-radius-s);
+        corner-shape: var(--corner-shape, round);
+        background-color: var(--ordo-c-bg-hover);
+        pointer-events: none;
+        z-index: -1;
+        transition: left calc(var(--ordo-duration-normal) * 1.5) var(--ordo-ease),
+          top calc(var(--ordo-duration-normal) * 1.5) var(--ordo-ease),
+          width calc(var(--ordo-duration-normal) * 1.5) var(--ordo-ease),
+          height calc(var(--ordo-duration-normal) * 1.5) var(--ordo-ease);
+      }
+
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:where(:not(:disabled)):hover {
+        anchor-name: --ordo-option-hover;
+        background-color: transparent;
+      }
     }
   }
 }
