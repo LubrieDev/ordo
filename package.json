@@ -1,0 +1,11 @@
+{
+  "name": "ordo-theme",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-theme.cjs",
+    "check:build": "node scripts/build-theme.cjs --check"
+  },
+  "devDependencies": {
+    "postcss": "8.5.30"
+  }
+}

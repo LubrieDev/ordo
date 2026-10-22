@@ -13,6 +13,18 @@ Ordo is a minimal [Obsidian](https://obsidian.md) theme with dark and light colo
 
 Select **ordo** under **Settings → Appearance → Themes**. It supports both dark and light base color schemes and requires **Obsidian 1.13.0+**.
 
+## Development
+
+Edit `src/theme.css`, which contains the readable source and English comments. The root `theme.css` is generated for distribution.
+
+```sh
+npm ci
+npm run build
+npm run check:build
+```
+
+The build removes explanatory comments and formatting whitespace while preserving CSS rules, Style Settings metadata, and required lint directives. Commit both the source and generated CSS after making changes.
+
 ## License
 
 MIT — see [LICENSE](https://github.com/LubrieDev/ordo/blob/main/LICENSE).

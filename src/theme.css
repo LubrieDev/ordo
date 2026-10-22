@@ -1,0 +1,3311 @@
+/* ============================================================
+   ORDO TEST — Complete token system
+   Ordo uses cool gray surfaces, soft shadows, and rounded corners.
+   Uniform backgrounds keep their opacity when focus changes.
+   Focus emphasizes borders and shadows without dimming the panel.
+
+   Architecture:
+    1. Base tokens         — HSL source, grayscale, palette
+    2. Size tokens         — spacing, radii, fonts, icons, shadows
+    3. Color tokens        — semantic backgrounds, text, borders, accents
+    4. Native variables    — mappings to --background-*, --text-*, etc.
+    5. Typography          — headings, inline titles, paragraphs
+    6. App shell           — panels, dividers, tabs, ribbon
+    7. UI components       — inputs, buttons, modals, status bar, tooltips
+    8. Editor / Markdown   — CodeMirror, code, math, quotes, callouts, tables
+    9. Reading width       — line width, embeds, readable width
+   10. Sidebar / Nav       — file explorer, backlinks, tags
+   11. Plugins             — Dataview, Kanban, Calendar, Style Settings, etc.
+   12. Responsive          — phone, tablet
+   13. Accessibility       — reduced motion, focus, high contrast
+   14. Scrollbars          — custom styling
+   15. Print               — clean output
+   16. User helpers        — optional CSS classes
+   17. Style Settings      — customization panel
+   ============================================================ */
+@charset "UTF-8";
+
+/* ============================================================
+   1 · BASE TOKENS — single source of truth
+   Change these values to keep the entire interface consistent.
+   ============================================================ */
+
+body {
+  /* --- HSL coordinates --- */
+  --ordo-h: 240;               /* cool hue of the grayscale palette   */
+  --ordo-s: 6%;                /* base saturation                     */
+  --ordo-l: 10.5%;             /* lightness of the darkest background   */
+
+  /* --- Derived dark grayscale --- */
+  --ordo-bg-0: hsl(var(--ordo-h), var(--ordo-s), var(--ordo-l));
+  --ordo-bg-1: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 3%));
+  --ordo-bg-2: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 6%));
+  --ordo-bg-hover: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 10%));
+  --ordo-border-rest: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 13%));
+  --ordo-border-focus: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 34.5%));
+
+  /* --- Dark text: lighter tones use more saturation for a cool tint --- */
+  --ordo-text-1: hsl(var(--ordo-h), calc(var(--ordo-s) * 2 + 2%), calc(var(--ordo-l) + 78%));
+  --ordo-text-2: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 56%));
+  --ordo-text-3: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 37%));
+
+  /* --- Default #73645F accent; customizable in Obsidian --- */
+  --accent-h: 15;
+  --accent-s: 9.52381%;
+  --accent-l: 41.176471%;
+  --ordo-accent: var(--color-accent);
+  --ordo-accent-hover: var(--color-accent-1);
+
+  /* --- Muted extended palette --- */
+  --ordo-red: #c98181;
+  --ordo-orange: #c99a6b;
+  --ordo-yellow: #c2b071;
+  --ordo-green: #83ae83;
+  --ordo-cyan: #6fadad;
+  --ordo-blue: #8098bd;
+  --ordo-purple: #9d8bbd;
+  --ordo-pink: #bd84a5;
+
+  /* --- Dimming tokens --- */
+  --ordo-image-dim: 0.78;
+}
+
+/* ============================================================
+   2 · SIZE TOKENS — spacing, radii, fonts, icons, shadows,
+       animations, elevations, z-index
+   ============================================================ */
+
+body {
+  /* --- Spacing --- */
+  --ordo-space-1: 2px;
+  --ordo-space-2: 4px;
+  --ordo-space-3: 6px;
+  --ordo-space-4: 8px;
+  --ordo-space-5: 12px;
+  --ordo-space-6: 16px;
+  --ordo-space-7: 20px;
+  --ordo-space-8: 24px;
+  --ordo-space-9: 32px;
+  --ordo-space-10: 40px;
+  --ordo-space-11: 48px;
+  --ordo-space-12: 64px;
+
+  /* --- Border radii --- */
+  --ordo-radius-xs: 4px;
+  --ordo-radius-s: 8px;
+  --ordo-radius-m: 12px;
+  --ordo-radius-l: 18px;
+  --ordo-radius-xl: 24px;
+  --ordo-radius-full: 9999px;
+
+  /* --- Floating panel spacing --- */
+  --ordo-gutter: 14px;
+
+  /* --- Panel divider --- */
+  --ordo-divider: var(--ordo-c-border-rest);
+  --ordo-divider-hover: var(--ordo-c-border-focus);
+
+  /* --- Shadows --- */
+  --ordo-shadow-xs: 0 1px 2px rgb(0 0 0 / 0.12);
+  --ordo-shadow-s: 0 1px 2px rgb(0 0 0 / 0.25), 0 2px 8px rgb(0 0 0 / 0.18);
+  --ordo-shadow-m: 0 2px 4px rgb(0 0 0 / 0.25), 0 4px 16px rgb(0 0 0 / 0.20);
+  --ordo-shadow-l: 0 2px 8px rgb(0 0 0 / 0.30), 0 8px 32px rgb(0 0 0 / 0.25);
+  --ordo-shadow-xl: 0 4px 16px rgb(0 0 0 / 0.35), 0 12px 48px rgb(0 0 0 / 0.30);
+  --ordo-shadow-rest: var(--ordo-shadow-s);
+  --ordo-shadow-focus: var(--ordo-shadow-l);
+  --ordo-shadow-ink: rgb(0 0 0 / 0.25);
+  --ordo-code-halo: 0 0 0 1px color-mix(in srgb, var(--text-normal) 9%, transparent),
+    0 0 16px 2px color-mix(in srgb, var(--text-normal) 6%, transparent);
+
+  /* --- Animations --- */
+  --ordo-duration-none: 0ms;
+  --ordo-duration-fast: 80ms;
+  --ordo-duration-normal: 150ms;
+  --ordo-duration-slow: 300ms;
+  --ordo-ease: ease;
+  --ordo-ease-in: ease-in;
+  --ordo-ease-out: ease-out;
+  --ordo-ease-in-out: ease-in-out;
+  --ordo-transition:
+    border-color var(--ordo-duration-normal) var(--ordo-ease),
+    box-shadow var(--ordo-duration-normal) var(--ordo-ease),
+    background-color var(--ordo-duration-normal) var(--ordo-ease),
+    opacity var(--ordo-duration-normal) var(--ordo-ease),
+    color var(--ordo-duration-normal) var(--ordo-ease);
+
+  /* --- Typography --- */
+  --ordo-font-ui: var(--font-default);
+  --ordo-font-text: var(--ordo-font-ui);
+  --ordo-font-mono: var(--font-monospace-default);
+  --ordo-font-size-xs: 11px;
+  --ordo-font-size-s: 12px;
+  --ordo-font-size-m: 13px;
+  --ordo-font-size-l: 15px;
+  --ordo-font-size-xl: 20px;
+  --ordo-font-size-2xl: 28px;
+  --ordo-line-height: 1.5;
+  --ordo-line-height-tight: 1.3;
+  --ordo-heading-spacing: calc(var(--ordo-p-spacing) * 2.5);
+  --ordo-p-spacing: 1rem;
+  --ordo-list-spacing: 0.075em;
+
+  /* --- Line width --- */
+  --ordo-line-width: 700px;
+  --ordo-line-width-wide: calc(var(--ordo-line-width) * 1.125);
+  --ordo-max-width: 100%;
+  --ordo-width-scale: 1;
+
+  /* --- Z-index --- */
+  --ordo-z-cover: 5;
+  --ordo-z-sidedock: 10;
+  --ordo-z-statusbar: 15;
+  --ordo-z-popover: 30;
+  --ordo-z-slides: 45;
+  --ordo-z-modal: 50;
+  --ordo-z-notice: 60;
+  --ordo-z-menu: 65;
+  --ordo-z-tooltip: 70;
+  --ordo-z-dragged: 80;
+
+  /* --- Border --- */
+  --ordo-border-width: 2px;
+
+  /* --- Code line height --- */
+  --ordo-code-line-height: 1.6;
+}
+
+/* Adaptive type scale */
+body {
+  --font-adaptive-normal: var(--font-text-size, 16px);
+  --font-adaptive-small: calc(var(--font-ui-small, 13px) * 1.07);
+  --font-adaptive-smaller: var(--font-ui-small, 13px);
+  --font-adaptive-smallest: var(--font-ui-smaller, 11px);
+  --font-code: calc(var(--font-adaptive-normal) * 0.875);
+}
+
+/* ============================================================
+   3 · COLOR TOKENS — semantic values for each color scheme
+   Explicit names for backgrounds, text, borders, and accents.
+   ============================================================ */
+
+/* --- Dark mode tokens --- */
+body {
+  /* Backgrounds */
+  --ordo-c-bg-base: var(--ordo-bg-0);
+  --ordo-c-bg-surface: var(--ordo-bg-1);
+  --ordo-c-bg-elevated: var(--ordo-bg-2);
+  --ordo-c-bg-hover: var(--ordo-bg-hover);
+  --ordo-c-bg-active: var(--ordo-bg-2);
+  --ordo-c-bg-overlay: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) - 1%) / 0.5);
+
+  /* Borders */
+  --ordo-c-border-rest: var(--ordo-border-rest);
+  --ordo-c-border-focus: var(--ordo-border-focus);
+  --ordo-c-border-hover: var(--ordo-border-focus);
+
+  /* Text */
+  --ordo-c-text-1: var(--ordo-text-1);
+  --ordo-c-text-2: var(--ordo-text-2);
+  --ordo-c-text-3: var(--ordo-text-3);
+  --ordo-c-text-faint: var(--ordo-text-3);
+  --ordo-c-text-on-accent: var(--ordo-text-1);
+  --ordo-c-text-error: var(--ordo-red);
+  --ordo-c-text-warning: var(--ordo-orange);
+  --ordo-c-text-success: var(--ordo-green);
+
+  /* Interactive accent */
+  --ordo-c-accent: var(--ordo-accent);
+  --ordo-c-accent-hover: var(--ordo-accent-hover);
+
+  /* Selection */
+  --ordo-c-selection: rgb(255 255 255 / 0.14);
+  --ordo-c-highlight: rgb(194 176 113 / 0.32);
+  --ordo-c-highlight-active: rgb(255 255 255 / 0.12);
+
+  /* Hover overlays */
+  --ordo-c-hover-overlay: rgb(255 255 255 / 0.04);
+  --ordo-c-hover-active-overlay: rgb(255 255 255 / 0.07);
+
+  /* Images */
+  --ordo-c-image-dim: var(--ordo-image-dim);
+}
+
+/* --- Light mode tokens ---
+   Cool gray surfaces with dark text and configurable lightness.
+   Native components and print styles may also use pure white. */
+.theme-light {
+  --ordo-l-light: 74%;
+
+  --ordo-bg-0: hsl(var(--ordo-h), var(--ordo-s), var(--ordo-l-light));
+  --ordo-bg-1: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) + 5%));
+  --ordo-bg-2: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) + 7.5%));
+  --ordo-bg-hover: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) + 1%));
+  --ordo-border-rest: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 6.5%));
+  --ordo-border-focus: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 35%));
+
+  --ordo-text-1: hsl(var(--ordo-h), calc(var(--ordo-s) * 2 + 2%), calc(var(--ordo-l-light) - 70%));
+  --ordo-text-2: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 46%));
+  --ordo-text-3: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 31%));
+
+  --ordo-red: #a85252;
+  --ordo-orange: #a86b3d;
+  --ordo-yellow: #8a7526;
+  --ordo-green: #5c8a5c;
+  --ordo-cyan: #3f8a8a;
+  --ordo-blue: #55719e;
+  --ordo-purple: #7563a0;
+  --ordo-pink: #9e5578;
+
+  --ordo-shadow-s: 0 1px 2px rgb(0 0 0 / 0.07), 0 2px 8px rgb(0 0 0 / 0.06);
+  --ordo-shadow-m: 0 2px 4px rgb(0 0 0 / 0.08), 0 4px 16px rgb(0 0 0 / 0.07);
+  --ordo-shadow-l: 0 2px 8px rgb(0 0 0 / 0.10), 0 8px 32px rgb(0 0 0 / 0.12);
+  --ordo-shadow-rest: var(--ordo-shadow-s);
+  --ordo-shadow-focus: var(--ordo-shadow-l);
+  --ordo-shadow-ink: rgb(0 0 0 / 0.13);
+
+  /* Light semantic tokens */
+  --ordo-c-bg-base: var(--ordo-bg-0);
+  --ordo-c-bg-surface: var(--ordo-bg-1);
+  --ordo-c-bg-elevated: var(--ordo-bg-2);
+  --ordo-c-bg-hover: var(--ordo-bg-hover);
+  --ordo-c-bg-overlay: hsl(var(--ordo-h), var(--ordo-s), 15% / 0.35);
+  --ordo-c-border-rest: var(--ordo-border-rest);
+  --ordo-c-border-focus: var(--ordo-border-focus);
+  --ordo-c-border-hover: var(--ordo-border-focus);
+  --ordo-c-text-1: var(--ordo-text-1);
+  --ordo-c-text-2: var(--ordo-text-2);
+  --ordo-c-text-3: var(--ordo-text-3);
+  --ordo-c-accent: var(--ordo-accent);
+  --ordo-c-accent-hover: var(--ordo-accent-hover);
+  --ordo-c-selection: rgb(0 0 0 / 0.14);
+  --ordo-c-highlight: rgb(214 168 61 / 0.30);
+  --ordo-c-highlight-active: rgb(0 0 0 / 0.09);
+  --ordo-c-hover-overlay: rgb(0 0 0 / 0.045);
+  --ordo-c-hover-active-overlay: rgb(0 0 0 / 0.08);
+  --ordo-c-image-dim: 1;
+
+  /* Light semantic overrides */
+  --background-modifier-hover: rgb(0 0 0 / 0.045);
+  --background-modifier-active-hover: rgb(0 0 0 / 0.08);
+  --background-modifier-cover: hsl(var(--ordo-h), var(--ordo-s), 15% / 0.35);
+  --workspace-background-translucent: hsl(var(--ordo-h), var(--ordo-s), var(--ordo-l-light) / 0.85);
+  --text-selection: rgb(0 0 0 / 0.14);
+  --text-highlight-bg: rgb(214 168 61 / 0.30);
+  --text-highlight-bg-active: rgb(0 0 0 / 0.09);
+  --active-line-bg: rgb(0 0 0 / 0.03);
+  --text-on-accent: var(--ordo-bg-2);
+  --checkbox-marker-color: var(--ordo-bg-2);
+
+  /* Syntax retains its hues with enough contrast against light gray. */
+  --code-comment: var(--ordo-c-text-2);
+  --code-keyword: color-mix(in srgb, var(--ordo-purple) 50%, var(--ordo-c-text-1));
+  --code-important: color-mix(in srgb, var(--ordo-yellow) 50%, var(--ordo-c-text-1));
+  --code-string: color-mix(in srgb, var(--ordo-green) 50%, var(--ordo-c-text-1));
+  --code-function: color-mix(in srgb, var(--ordo-blue) 50%, var(--ordo-c-text-1));
+  --code-property: color-mix(in srgb, var(--ordo-cyan) 50%, var(--ordo-c-text-1));
+  --code-tag: color-mix(in srgb, var(--ordo-red) 50%, var(--ordo-c-text-1));
+  --code-value: color-mix(in srgb, var(--ordo-orange) 50%, var(--ordo-c-text-1));
+}
+
+.theme-light .callout[data-callout="note"],
+.theme-light .callout[data-callout="quote"] {
+  --callout-color: 122, 122, 134;
+}
+
+/* ============================================================
+   4 · NATIVE OBSIDIAN VARIABLES — complete mappings
+   Native components inherit Ordo's visual identity.
+   ============================================================ */
+
+body {
+  --font-interface-theme: var(--ordo-font-ui);
+  --font-text-theme: var(--ordo-font-text);
+  --font-monospace-theme: var(--ordo-font-mono);
+
+  /* --- Backgrounds --- */
+  --background-primary: var(--ordo-bg-1);
+  --background-primary-alt: var(--ordo-bg-2);
+  --background-secondary: var(--ordo-bg-0);
+  --background-secondary-alt: var(--ordo-bg-1);
+  --background-modifier-hover: var(--ordo-c-hover-overlay);
+  --background-modifier-active-hover: var(--ordo-c-hover-active-overlay);
+  --background-modifier-border: var(--ordo-c-border-rest);
+  --background-modifier-border-hover: var(--ordo-c-border-focus);
+  --background-modifier-border-focus: var(--ordo-c-border-focus);
+  --background-modifier-box-shadow: var(--ordo-shadow-rest);
+  --background-modifier-cover: var(--ordo-c-bg-overlay);
+  --background-modifier-success: var(--ordo-green);
+  --background-modifier-error: var(--ordo-red);
+  --search-result-background: var(--ordo-c-bg-surface);
+
+  /* --- Text --- */
+  --text-normal: var(--ordo-c-text-1);
+  --text-muted: var(--ordo-c-text-2);
+  --text-faint: var(--ordo-c-text-3);
+  --text-on-accent: var(--ordo-c-text-1);
+  --text-selection: var(--ordo-c-selection);
+  --text-highlight-bg: var(--ordo-c-highlight);
+  --text-highlight-bg-active: var(--ordo-c-highlight-active);
+  --text-formatting: var(--ordo-c-text-3);
+  --text-error: var(--ordo-c-text-error);
+
+  /* --- Interactive accent --- */
+  --interactive-normal: var(--ordo-c-bg-elevated);
+  --interactive-hover: var(--ordo-c-bg-hover);
+  --interactive-accent: var(--ordo-c-accent);
+  --interactive-accent-hover: var(--ordo-c-accent-hover);
+  --text-accent: var(--ordo-c-text-1);
+  --text-accent-hover: var(--ordo-c-text-2);
+
+  /* --- Icons --- */
+  --icon-color: var(--ordo-c-text-2);
+  --icon-color-hover: var(--ordo-c-text-1);
+  --icon-color-active: var(--ordo-c-text-1);
+  --icon-color-focused: var(--ordo-c-text-1);
+
+  /* --- Window frame --- */
+  --titlebar-background: var(--ordo-c-bg-base);
+  --titlebar-background-focused: var(--ordo-c-bg-surface);
+  --titlebar-text-color-focused: var(--ordo-c-text-1);
+  --divider-color: var(--ordo-divider);
+  --divider-color-hover: var(--ordo-divider-hover);
+  --divider-width: var(--ordo-border-width);
+  --divider-width-hover: var(--ordo-space-4);
+  --frame-divider-color: transparent;
+  --tab-outline-color: var(--ordo-c-border-rest);
+  --workspace-background-translucent: hsl(var(--ordo-h), var(--ordo-s), var(--ordo-l) / 0.85);
+
+  /* --- Navigation --- */
+  --ordo-nav-padding-inline: 10px;
+  --nav-item-padding: 7px var(--ordo-nav-padding-inline);
+  --nav-item-parent-spacing: 2px;
+  --nav-item-children-padding-left: 14px;
+  --nav-item-color: var(--ordo-c-text-2);
+  --nav-item-color-hover: var(--ordo-c-text-1);
+  --nav-item-color-active: var(--ordo-c-text-1);
+  --nav-item-color-selected: var(--ordo-c-text-1);
+  --nav-item-background-hover: var(--ordo-c-bg-hover);
+  --nav-item-background-active: var(--ordo-c-bg-elevated);
+  --nav-item-background-selected: var(--ordo-c-bg-elevated);
+  --nav-item-border-radius: var(--ordo-radius-s);
+  --nav-item-radius: var(--ordo-radius-s);
+  --nav-indentation-guide-color: var(--ordo-c-border-rest);
+  --nav-collapse-icon-color: var(--ordo-c-text-3);
+
+  /* --- Lists, blockquotes, and guides --- */
+  --list-marker-color: var(--ordo-c-text-3);
+  --indentation-guide-color: var(--ordo-c-border-rest);
+  --indentation-guide-color-active: var(--ordo-c-border-focus);
+  --quote-opening-modifier: var(--ordo-c-border-rest);
+  --collapse-icon-color: var(--ordo-c-text-3);
+
+  /* --- Checkboxes --- */
+  --checkbox-color: var(--ordo-c-border-focus);
+  --checkbox-color-hover: var(--ordo-c-text-2);
+  --checkbox-border-color: var(--ordo-c-border-rest);
+  --checkbox-marker-color: var(--ordo-c-bg-surface);
+
+  /* --- Code --- */
+  --code-background: var(--ordo-c-bg-base);
+  --code-normal: var(--ordo-c-text-1);
+  --code-radius: var(--ordo-radius-s);
+  --code-comment: color-mix(in srgb, var(--ordo-c-text-3) 85%, var(--ordo-c-text-1));
+  --code-function: var(--ordo-blue);
+  --code-keyword: var(--ordo-purple);
+  --code-important: var(--ordo-yellow);
+  --code-operator: var(--ordo-c-text-2);
+  --code-property: var(--ordo-cyan);
+  --code-punctuation: var(--code-comment);
+  --code-string: var(--ordo-green);
+  --code-tag: var(--ordo-red);
+  --code-value: var(--ordo-orange);
+
+  /* --- Links --- */
+  --link-color: color-mix(in srgb, var(--ordo-c-accent) 25%, var(--ordo-c-text-1));
+  --link-color-hover: var(--ordo-c-text-1);
+  --link-decoration: underline;
+  --link-decoration-hover: underline;
+  --link-decoration-thickness: 1px;
+  --link-external-color: var(--link-color);
+  --link-external-color-hover: var(--link-color-hover);
+  --link-external-decoration: var(--link-decoration);
+  --link-external-decoration-hover: var(--link-decoration-hover);
+  --link-unresolved-color: var(--ordo-c-text-2);
+  --link-unresolved-decoration-color: var(--ordo-c-border-focus);
+  --link-unresolved-opacity: 0.8;
+
+  /* --- Tags --- */
+  --tag-size: 0.8em;
+  --tag-padding-y: 0.125em;
+  --tag-padding-x: 0.5em;
+  --tag-radius: 4px;
+  --tag-background: var(--ordo-c-bg-elevated);
+  --tag-background-hover: var(--tag-background);
+  --tag-color: var(--ordo-c-text-1);
+  --tag-color-hover: var(--ordo-c-text-1);
+  --tag-border-color: var(--ordo-c-border-rest);
+  --tag-border-color-hover: var(--tag-border-color);
+  --tag-border-width: var(--ordo-border-width);
+
+  /* --- Callouts --- */
+  --callout-border-width: var(--ordo-border-width);
+  --callout-border-opacity: 1;
+  --callout-radius: var(--ordo-radius-s);
+  --callout-padding: 1rem 1.25rem;
+  --callout-title-padding: 0;
+  --callout-content-padding: 0;
+  --callout-title-size: 0.875em;
+  --callout-content-background: transparent;
+  --callout-blend-mode: normal;
+
+  /* --- Blockquotes --- */
+  --blockquote-border-thickness: 3px;
+  --blockquote-border-color: var(--ordo-c-border-focus);
+  --blockquote-color: var(--text-muted);
+  --blockquote-style: italic;
+  --blockquote-font-style: italic;
+
+  /* --- Tables --- */
+  /* Native geometry, headers, and rows; selection uses the Ordo palette. */
+  --table-selection: var(--text-selection);
+  --table-selection-border-color: var(--ordo-c-border-focus);
+
+  /* --- Forms and menus --- */
+  --modal-border-color: var(--ordo-c-border-focus);
+  --modal-background: var(--ordo-c-bg-surface);
+  --prompt-border-color: var(--ordo-c-border-focus);
+  --dropdown-background: var(--ordo-c-bg-elevated);
+  --setting-items-background: transparent;
+  --setting-items-border-width: 0px;
+
+  /* --- Scrollbar --- */
+  --scrollbar-active-thumb-bg: var(--ordo-c-border-focus);
+  --scrollbar-bg: transparent;
+  --scrollbar-thumb-bg: var(--ordo-c-border-rest);
+
+  /* --- Canvas --- */
+  --canvas-dot-pattern: var(--ordo-c-border-rest);
+
+  /* --- Embeds --- */
+  --embed-block-shadow-hover: none;
+  --image-radius: var(--ordo-radius-s);
+
+  /* --- Editor --- */
+  --active-line-bg: rgb(255 255 255 / 0.02);
+  --line-number-color: var(--ordo-c-text-3);
+  --line-number-color-active: var(--ordo-c-text-2);
+  --caret-color: var(--ordo-c-text-1);
+  --cursor: default;
+
+  /* --- Graph --- */
+  --graph-line: var(--ordo-c-border-rest);
+  --graph-node: var(--ordo-c-text-3);
+  --graph-node-focused: var(--ordo-c-text-1);
+  --graph-node-tag: var(--ordo-cyan);
+  --graph-node-attachment: var(--ordo-yellow);
+  --graph-node-unresolved: var(--ordo-c-border-focus);
+
+  /* --- Progress --- */
+  --progress-outline: var(--ordo-c-border-rest);
+  --progress-complete: var(--ordo-c-border-focus);
+
+  /* --- Calendar --- */
+  --calendar-dot-active: var(--ordo-c-text-3);
+  --calendar-dot-today: var(--ordo-c-text-1);
+
+  /* --- Metadata --- */
+  --metadata-label-font-size: var(--font-adaptive-small);
+  --metadata-input-font-size: var(--font-adaptive-small);
+
+  /* --- Bases --- */
+  --bases-table-font-size: var(--table-text-size);
+}
+
+/* Extended palette mapped to native names (dark) */
+.theme-dark {
+  --color-red: var(--ordo-red);
+  --color-orange: var(--ordo-orange);
+  --color-yellow: var(--ordo-yellow);
+  --color-green: var(--ordo-green);
+  --color-cyan: var(--ordo-cyan);
+  --color-blue: var(--ordo-blue);
+  --color-purple: var(--ordo-purple);
+  --color-pink: var(--ordo-pink);
+  --color-red-rgb: 201, 129, 129;
+  --color-orange-rgb: 201, 154, 107;
+  --color-yellow-rgb: 194, 176, 113;
+  --color-green-rgb: 131, 174, 131;
+  --color-cyan-rgb: 111, 173, 173;
+  --color-blue-rgb: 128, 152, 189;
+  --color-purple-rgb: 157, 139, 189;
+  --color-pink-rgb: 189, 132, 165;
+  --chart-color-1: var(--ordo-blue);
+  --chart-color-2: var(--ordo-red);
+  --chart-color-3: var(--ordo-yellow);
+  --chart-color-4: var(--ordo-green);
+  --chart-color-5: var(--ordo-orange);
+  --chart-color-6: var(--ordo-purple);
+  --chart-color-7: var(--ordo-cyan);
+  --chart-color-8: var(--ordo-pink);
+}
+
+/* Extended palette mapped to native names (light) */
+.theme-light {
+  --color-red: var(--ordo-red);
+  --color-orange: var(--ordo-orange);
+  --color-yellow: var(--ordo-yellow);
+  --color-green: var(--ordo-green);
+  --color-cyan: var(--ordo-cyan);
+  --color-blue: var(--ordo-blue);
+  --color-purple: var(--ordo-purple);
+  --color-pink: var(--ordo-pink);
+  --color-red-rgb: 168, 82, 82;
+  --color-orange-rgb: 168, 107, 61;
+  --color-yellow-rgb: 138, 117, 38;
+  --color-green-rgb: 92, 138, 92;
+  --color-cyan-rgb: 63, 138, 138;
+  --color-blue-rgb: 85, 113, 158;
+  --color-purple-rgb: 117, 99, 160;
+  --color-pink-rgb: 158, 85, 120;
+}
+
+/* ============================================================
+   5 · TYPOGRAPHY — headings, inline titles, paragraphs
+   ============================================================ */
+
+body {
+  /* Headings and titles inherit native sizes, weights, and line heights. */
+  --p-spacing: var(--ordo-p-spacing);
+  --heading-spacing: var(--ordo-heading-spacing);
+  --list-spacing: var(--ordo-list-spacing);
+  --line-height-normal: var(--ordo-line-height);
+  --line-height-tight: var(--ordo-line-height-tight);
+}
+
+body {
+  background-color: var(--ordo-c-bg-base);
+  color: var(--ordo-c-text-1);
+  font-family: var(--font-interface);
+  caret-color: var(--caret-color);
+}
+
+::selection {
+  background: var(--text-selection);
+}
+
+.markdown-preview-view,
+.workspace-leaf-content[data-type=markdown] {
+  font-family: var(--font-text);
+}
+
+.cm-s-obsidian span.cm-error {
+  color: var(--ordo-red);
+}
+
+/* ============================================================
+   6 · APP SHELL — panels as floating cards
+   ============================================================ */
+
+.workspace-split.mod-root,
+.workspace-split.mod-horizontal,
+.workspace-split.mod-vertical {
+  background: var(--ordo-c-bg-base);
+}
+
+/* Keep dividers visible at rest with a wider grab area.
+   Obsidian controls each divider's position and orientation. */
+.workspace-leaf-resize-handle,
+.workspace-sidedock-resize-handle {
+  background: none;
+  border-color: var(--ordo-divider);
+  box-shadow: none;
+  transition: border-color var(--ordo-duration-fast) var(--ordo-ease);
+}
+
+.workspace-leaf-resize-handle:hover,
+.workspace-sidedock-resize-handle:hover,
+.workspace-leaf-resize-handle.is-active,
+.workspace-sidedock-resize-handle.is-active {
+  background: none;
+  border-color: var(--ordo-divider-hover);
+}
+
+/* REST */
+.workspace-split.mod-root .workspace-leaf,
+.workspace-sidedock-vault-profile {
+  box-sizing: border-box;
+  border-radius: var(--ordo-radius-m);
+}
+
+.workspace-leaf-content {
+  /* Keep background opacity unchanged when focus moves. Dimming this
+     container also composites its scroll areas over other surfaces. */
+  background: var(--ordo-c-bg-surface);
+}
+
+.view-header {
+  background: var(--ordo-c-bg-surface);
+  margin: 0;
+  border: 0;
+  border-bottom: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-m) var(--ordo-radius-m) 0 0;
+}
+
+.view-header-title {
+  text-overflow: ellipsis;
+}
+
+.view-actions {
+  --icon-color-active: var(--ordo-c-text-1);
+}
+
+.workspace-sidedock-vault-profile {
+  border-color: var(--ordo-c-border-rest);
+}
+
+body:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile,
+body:not(.is-mobile) .workspace-split.mod-right-split .workspace-sidedock-vault-profile {
+  flex: 0 0 auto;
+  width: calc(100% - 16px);
+  background: var(--ordo-bg-1);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-s);
+  box-shadow: var(--ordo-shadow-rest);
+  margin: var(--ordo-gutter) 10px var(--ordo-gutter) 6px;
+  padding: 12px 14px;
+  overflow: hidden;
+  transition: var(--ordo-transition);
+}
+
+.workspace-drawer-vault-switcher {
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+body:not(.is-mobile) .workspace-split.mod-left-split .workspace-tab-container:hover,
+body:not(.is-mobile) .workspace-split.mod-right-split .workspace-tab-container:hover,
+body:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile:hover,
+body:not(.is-mobile) .workspace-split.mod-right-split .workspace-sidedock-vault-profile:hover {
+  border-top-color: var(--ordo-c-border-focus);
+  border-right-color: var(--ordo-c-border-focus);
+  border-bottom-color: var(--ordo-c-border-focus);
+  border-left-color: var(--ordo-c-border-focus);
+}
+
+/* Sidebars */
+.workspace-split.mod-left-split,
+.workspace-split.mod-right-split {
+  background: var(--ordo-c-bg-base);
+}
+
+.mod-left-split,
+.mod-right-split {
+  margin: 0;
+}
+
+.workspace-tab-container {
+  box-sizing: border-box;
+  background: var(--ordo-c-bg-surface);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-m);
+  box-shadow: var(--ordo-shadow-rest);
+  margin: var(--ordo-gutter) 10px var(--ordo-gutter) 6px;
+  width: calc(100% - 16px);
+  overflow: hidden;
+}
+
+body:not(.is-mobile) .workspace-split.mod-left-split .workspace-tab-container,
+body:not(.is-mobile) .workspace-split.mod-right-split .workspace-tab-container {
+  transition: border-color var(--ordo-duration-normal) var(--ordo-ease);
+}
+
+/* Rounded outlines follow the native shape. The fill stays inside
+   the border to prevent halos along the curves. */
+.workspace-tab-container,
+.workspace-sidedock-vault-profile,
+.callout,
+input[type='text'],
+input[type='search'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='date'],
+textarea,
+.dropdown,
+button,
+.status-bar,
+.modal-container .modal,
+.modal.mod-sidebar-layout,
+.prompt,
+.hover-popover,
+.menu,
+.suggestion-container,
+.tooltip,
+.markdown-rendered .tag,
+.cm-s-obsidian span.cm-hashtag,
+.markdown-rendered :not(pre) > code,
+.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-codeblock) .cm-inline-code,
+img[src$="#outline"],
+div[src$="#outline"] img,
+span[src$="#outline"] img,
+img[src$="#interface"],
+span[src$="#interface"] img,
+.kanban-plugin__lane-items,
+.kanban-plugin__item,
+.kanban-plugin__lane-header-wrapper,
+.kanban-plugin__placeholder,
+#calendar-container .day,
+.style-settings-container[data-level="2"] {
+  corner-shape: var(--corner-shape, round);
+  background-clip: padding-box;
+}
+
+/* FOCUS: change the outline while keeping the fill uniform. */
+.workspace-tabs.mod-active > .workspace-tab-container,
+.workspace-tab-container:focus-within {
+  border-color: var(--ordo-c-border-focus);
+  box-shadow: var(--ordo-shadow-focus);
+}
+
+/* The active tab and its note form a continuous surface.
+   Side panels retain floating cards; the main panel extends to
+   the tab bar, matching Obsidian's native layout. */
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-container {
+  margin: 0;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-leaf,
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .view-header {
+  border-radius: 0;
+}
+
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .view-header {
+  border-bottom: var(--file-header-border);
+}
+
+.workspace-leaf.mod-active .view-header,
+.workspace-leaf:focus-within .view-header {
+  border-bottom-color: var(--ordo-c-border-focus);
+}
+
+.workspace-leaf.mod-active .view-header-title {
+  color: var(--ordo-c-text-1);
+}
+
+/* Ribbon */
+.workspace-ribbon {
+  background: var(--ordo-c-bg-base);
+  border-right: 1px solid var(--ordo-c-border-rest);
+}
+
+/* ============================================================
+   7 · UI COMPONENTS — inputs, buttons, modals, etc.
+   ============================================================ */
+
+/* Tabs retain native heights, curves, spacing, controls, and states.
+   Ordo's background, text, and border variables supply the palette.
+   No additional boxes or shadows appear inside the active tab. */
+
+/* Both curved ends need room inside their clipping container.
+   In Obsidian 1.14, the native 6px padding clips the 10px curves. */
+body:not(.is-mobile) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-container-inner {
+  padding-inline: max(15px, calc(var(--tab-curve) + var(--tab-outline-width)));
+}
+
+/* The active outline already separates tabs; avoid duplicating it
+   with internal vertical divider lines. */
+.mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-inner::after {
+  display: none;
+}
+
+/* A single background follows the active tab. Each group has its own
+   anchor, while titles and controls retain their native layout.
+   Unsupported anchors, dragging, and reduced motion use the native
+   appearance without animation. */
+@supports (anchor-name: --ordo-active-tab) and (anchor-scope: --ordo-active-tab) and (left: anchor(left)) and (width: anchor-size(width)) {
+  @media (prefers-reduced-motion: no-preference) {
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container {
+      anchor-scope: --ordo-active-tab;
+      --ordo-tab-motion: calc(var(--ordo-duration-normal) * 1.5);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header {
+      z-index: 1;
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header.is-active {
+      anchor-name: --ordo-active-tab;
+      background-color: transparent;
+      box-shadow: none;
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header.is-active::before,
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header.is-active::after {
+      box-shadow: none;
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-container-inner::after,
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::before,
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::after {
+      content: '';
+      position: absolute;
+      position-anchor: --ordo-active-tab;
+      pointer-events: none;
+      z-index: 0;
+      transition: left var(--ordo-tab-motion) var(--ordo-ease), width var(--ordo-tab-motion) var(--ordo-ease);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-container-inner::after {
+      left: anchor(left, -10000px);
+      top: anchor(top);
+      width: anchor-size(width);
+      height: anchor-size(height);
+      border-radius: var(--tab-radius-active);
+      corner-shape: var(--tab-corner-shape);
+      background: var(--tab-background-active);
+      box-shadow: 0 0 0 var(--tab-outline-width) var(--tab-outline-color);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::before,
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::after {
+      top: calc(anchor(bottom) - var(--tab-curve));
+      width: var(--tab-curve);
+      height: var(--tab-curve);
+      background: radial-gradient(circle at var(--ordo-tab-curve-center) 0,
+        transparent calc(var(--tab-curve) - var(--tab-outline-width)),
+        var(--tab-outline-color) calc(var(--tab-curve) - var(--tab-outline-width)),
+        var(--tab-outline-color) var(--tab-curve),
+        var(--tab-background-active) var(--tab-curve));
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::before {
+      --ordo-tab-curve-center: 0;
+      left: calc(anchor(left, -10000px) - var(--tab-curve));
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .mod-root .workspace-tabs:not(.mod-stacked) .workspace-tab-header-spacer::after {
+      --ordo-tab-curve-center: 100%;
+      left: anchor(right, -10000px);
+    }
+  }
+}
+
+/* --- Settings cards --- */
+/* Obsidian controls grouping, width, and the joined search field
+   and list. Each option has its own surface inside the frame. */
+.modal.mod-settings {
+  --setting-items-background: var(--ordo-c-bg-surface);
+  --setting-items-border-width: var(--ordo-border-width);
+  --setting-items-border-color: var(--ordo-c-border-rest);
+  --setting-items-radius: var(--ordo-radius-m);
+}
+
+.modal.mod-settings :is(.setting-items, .setting-group-search, .setting-item) {
+  background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal.mod-settings :is(.setting-items, .setting-group-search, .setting-item) {
+    transition: border-color var(--ordo-duration-normal) var(--ordo-ease);
+  }
+
+  .modal.mod-settings .setting-item > .setting-item-info {
+    transition: opacity var(--ordo-duration-normal) var(--ordo-ease);
+  }
+}
+
+/* Limit the query to children that form the card. The title and its
+   outer gap do not activate the frame shared by search and list. */
+.modal.mod-settings .setting-group:has(> :is(.setting-items, .setting-group-search):is(:hover, :focus-within)),
+.modal.mod-settings .setting-item:where(:not(.setting-group *)):focus-within {
+  --setting-items-border-color: var(--ordo-c-border-focus);
+}
+
+/* Leave room for the lift effect without moving neighboring options. */
+.modal.mod-settings .setting-group > .setting-items:not(:empty) {
+  --setting-items-divider-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ordo-space-4);
+  padding: var(--ordo-space-4);
+}
+
+.modal.mod-settings .setting-item:not(.setting-item-heading, .mod-empty-state),
+.modal.mod-settings .setting-group .setting-items > .setting-item:not(.setting-item-heading, .mod-empty-state) {
+  background-color: var(--code-background);
+  border-radius: var(--ordo-radius-s);
+  box-shadow: var(--ordo-shadow-rest);
+}
+
+@media (hover: hover) {
+  .modal.mod-settings .setting-item:where(:not(.setting-group *)):hover {
+    --setting-items-border-color: var(--ordo-c-border-focus);
+  }
+
+  /* Text retains its normal clarity on touchscreens. */
+  .modal.mod-settings .setting-item:not(.setting-item-heading, .is-disabled, .mod-empty-state) > .setting-item-info {
+    opacity: 0.7;
+  }
+
+  .modal.mod-settings .setting-item:not(.setting-item-heading, .is-disabled, .mod-empty-state):is(:hover, :focus-within) > .setting-item-info {
+    opacity: 1;
+  }
+}
+
+/* Use the same scale, shadow, and duration as note blocks. The outer
+   frame stays fixed while the background, text, and controls grow together. */
+@media screen and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  body:not(.is-mobile):not(.disable-animations) .modal.mod-settings .setting-item:not(.setting-item-heading, .is-disabled, .mod-empty-state) {
+    scale: 1;
+    transition: scale var(--ordo-block-lift-duration) var(--ordo-ease),
+      box-shadow var(--ordo-block-lift-duration) var(--ordo-ease),
+      border-color var(--ordo-duration-normal) var(--ordo-ease);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .modal.mod-settings .setting-item:not(.setting-item-heading, .is-disabled, .mod-empty-state):hover {
+    scale: var(--ordo-block-lift-scale);
+    box-shadow: var(--ordo-block-lift-shadow);
+    z-index: 1;
+  }
+}
+
+/* --- Inputs and buttons --- */
+input[type='text'],
+input[type='search'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='date'],
+textarea,
+.dropdown,
+button {
+  background-color: var(--ordo-c-bg-elevated);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-s);
+  box-shadow: none;
+  color: var(--ordo-c-text-2);
+  transition: var(--ordo-transition);
+}
+
+input[type='text']:hover,
+input[type='search']:hover,
+input[type='email']:hover,
+input[type='password']:hover,
+input[type='number']:hover,
+input[type='date']:hover,
+textarea:hover,
+.dropdown:hover,
+button:hover {
+  border-color: var(--ordo-c-border-focus);
+  color: var(--ordo-c-text-1);
+}
+
+input[type='text']:focus,
+input[type='search']:focus,
+input[type='email']:focus,
+input[type='password']:focus,
+input[type='number']:focus,
+input[type='date']:focus,
+textarea:focus,
+.dropdown:focus,
+button:focus-visible {
+  border-color: var(--ordo-c-border-focus);
+  box-shadow: var(--ordo-shadow-focus);
+  color: var(--ordo-c-text-1);
+}
+
+/* Desktop selectors use Chromium's customizable picker. The button
+   keeps its arrow and fits the current label. Mobile devices and
+   older engines retain the system selector. */
+@supports (appearance: base-select) and selector(select::picker(select)) {
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]),
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker(select) {
+    appearance: base-select;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker-icon {
+    display: none;
+  }
+
+  /* The closed button does not wrap like its options. Long labels
+     remain contained when the control needs to shrink. */
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) {
+    align-items: center;
+    inline-size: max-content;
+    min-inline-size: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker(select) {
+    position-area: block-end span-inline-start;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    inset: auto;
+    justify-self: end;
+    min-inline-size: anchor-size(width);
+    inline-size: max-content;
+    max-inline-size: min(calc(100vw - var(--ordo-space-9)), calc(100% - var(--ordo-space-6)));
+    max-block-size: min(360px, calc(100dvh - var(--ordo-space-9)));
+    margin-block: var(--ordo-space-2);
+    padding: var(--ordo-space-2);
+    border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
+    border-radius: var(--ordo-radius-m);
+    corner-shape: var(--corner-shape, round);
+    background: var(--ordo-c-bg-surface);
+    background-clip: padding-box;
+    color: var(--ordo-c-text-1);
+    box-shadow: var(--ordo-shadow-focus);
+    overflow: auto;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option {
+    display: flex;
+    align-items: center;
+    gap: var(--ordo-space-4);
+    padding: var(--ordo-space-3) var(--ordo-space-5);
+    border: var(--ordo-border-width) solid transparent;
+    border-radius: var(--ordo-radius-s);
+    background: transparent;
+    color: var(--ordo-c-text-2);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:checked {
+    border-color: var(--ordo-c-border-focus);
+    background-color: color-mix(in srgb, var(--background-primary) 85%, #000);
+    color: var(--ordo-c-text-1);
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:where(:not(:disabled)):is(:hover, :focus-visible) {
+    background-color: var(--ordo-c-bg-hover);
+    color: var(--ordo-c-text-1);
+    outline: none;
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:disabled {
+    color: var(--ordo-c-text-faint);
+  }
+
+  body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option::checkmark {
+    order: 1;
+    margin-inline-start: auto;
+    color: var(--ordo-c-text-1);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option {
+      transition: var(--ordo-transition);
+    }
+
+    body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker(select) {
+      opacity: 0;
+      transition: opacity calc(var(--ordo-duration-normal) * 2) var(--ordo-ease),
+        display calc(var(--ordo-duration-normal) * 2) allow-discrete,
+        overlay calc(var(--ordo-duration-normal) * 2) allow-discrete;
+    }
+
+    body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]):open::picker(select) {
+      opacity: 1;
+    }
+
+    @starting-style {
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]):open::picker(select) {
+        opacity: 0;
+      }
+    }
+  }
+}
+
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.clickable-icon {
+  border-radius: var(--ordo-radius-s);
+  color: var(--ordo-c-text-2);
+  transition: var(--ordo-transition);
+}
+
+.clickable-icon:hover {
+  background: var(--ordo-c-bg-hover);
+  color: var(--ordo-c-text-1);
+}
+
+/* --- Status bar --- */
+.status-bar {
+  background-color: var(--ordo-c-bg-surface);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-s);
+  box-shadow: var(--ordo-shadow-rest);
+  box-sizing: border-box;
+  margin: 0 var(--ordo-gutter) var(--ordo-gutter) auto;
+  width: fit-content;
+  color: var(--ordo-c-text-3);
+  font-size: var(--font-adaptive-smallest);
+  transition: color var(--ordo-duration-normal) linear, border-color var(--ordo-duration-normal) var(--ordo-ease);
+}
+
+.status-bar:hover {
+  border-color: var(--ordo-c-border-focus);
+  color: var(--ordo-c-text-2);
+}
+
+.status-bar .status-bar-item.mod-clickable:hover,
+.status-bar .plugin-sync:hover .sync-status-icon.mod-working,
+.status-bar .plugin-sync:hover .sync-status-icon.mod-success {
+  background-color: var(--ordo-c-bg-hover);
+  color: var(--ordo-c-text-1);
+}
+
+/* --- Modals, popovers, and menus --- */
+.modal-container .modal {
+  background: var(--ordo-c-bg-surface);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
+  border-radius: var(--ordo-radius-m);
+  box-shadow: var(--ordo-shadow-focus);
+  overflow: hidden;
+}
+
+.modal.mod-sidebar-layout,
+.prompt,
+.hover-popover,
+.menu {
+  background: var(--ordo-c-bg-surface);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
+  border-radius: var(--ordo-radius-l);
+  box-shadow: var(--ordo-shadow-focus);
+}
+
+/* The search field is part of the frame, without another inner outline. */
+input.prompt-input,
+input.prompt-input:hover,
+input.prompt-input:focus,
+input.prompt-input:focus-visible {
+  background-color: transparent;
+  border: 0;
+  border-bottom: var(--border-width) solid var(--background-secondary);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.suggestion-container {
+  background: var(--ordo-c-bg-surface);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
+  border-radius: var(--ordo-radius-s);
+  box-shadow: var(--ordo-shadow-focus);
+  overflow: hidden;
+}
+
+.tooltip {
+  --tooltip-background: var(--ordo-c-bg-elevated);
+  /* The native arrow uses this variable in all four orientations. */
+  --background-modifier-message: var(--tooltip-background);
+  transition: none;
+  animation: none;
+  background: var(--tooltip-background);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-s);
+  color: var(--ordo-c-text-1);
+  box-shadow: var(--ordo-shadow-rest);
+}
+
+.tooltip.mod-error {
+  --tooltip-background: var(--background-modifier-error);
+}
+
+/* A 3px offset leaves a 2px gap outside the 1px border. */
+.tooltip .tooltip-arrow {
+  transform: translateY(-3px);
+}
+
+.tooltip.mod-top .tooltip-arrow {
+  transform: translateY(3px);
+}
+
+.tooltip.mod-right .tooltip-arrow {
+  transform: translateX(-3px);
+}
+
+.tooltip.mod-left .tooltip-arrow {
+  transform: translateX(3px);
+}
+
+/* --- Aligned search --- */
+.document-search,
+.document-replace {
+  max-width: 100%;
+  padding: 0;
+}
+
+.document-search-container {
+  margin: 0 auto;
+  max-width: 100%;
+  width: min(var(--ordo-line-width), var(--ordo-max-width));
+}
+
+/* --- Progress --- */
+.markdown-rendered progress,
+.markdown-source-view.is-live-preview progress,
+.markdown-preview-view progress {
+  width: 220px;
+  max-width: 100%;
+}
+
+.markdown-rendered progress[value]::-webkit-progress-bar,
+.markdown-source-view.is-live-preview progress[value]::-webkit-progress-bar,
+.markdown-preview-view progress[value]::-webkit-progress-bar {
+  box-shadow: inset 0 0 0 var(--ordo-border-width) var(--progress-outline);
+}
+
+.markdown-rendered progress[value^="1"]::-webkit-progress-value,
+.markdown-rendered progress[value^="2"]::-webkit-progress-value,
+.markdown-rendered progress[value^="3"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value^="1"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value^="2"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value^="3"]::-webkit-progress-value,
+.markdown-preview-view progress[value^="1"]::-webkit-progress-value,
+.markdown-preview-view progress[value^="2"]::-webkit-progress-value,
+.markdown-preview-view progress[value^="3"]::-webkit-progress-value {
+  background-color: var(--ordo-red);
+}
+
+.markdown-rendered progress[value^="4"]::-webkit-progress-value,
+.markdown-rendered progress[value^="5"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value^="4"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value^="5"]::-webkit-progress-value,
+.markdown-preview-view progress[value^="4"]::-webkit-progress-value,
+.markdown-preview-view progress[value^="5"]::-webkit-progress-value {
+  background-color: var(--ordo-orange);
+}
+
+.markdown-rendered progress[value^="6"]::-webkit-progress-value,
+.markdown-rendered progress[value^="7"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value^="6"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value^="7"]::-webkit-progress-value,
+.markdown-preview-view progress[value^="6"]::-webkit-progress-value,
+.markdown-preview-view progress[value^="7"]::-webkit-progress-value {
+  background-color: var(--ordo-yellow);
+}
+
+.markdown-rendered progress[value^="8"]::-webkit-progress-value,
+.markdown-rendered progress[value^="9"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value^="8"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value^="9"]::-webkit-progress-value,
+.markdown-preview-view progress[value^="8"]::-webkit-progress-value,
+.markdown-preview-view progress[value^="9"]::-webkit-progress-value {
+  background-color: var(--ordo-green);
+}
+
+.markdown-rendered progress[value="100"]::-webkit-progress-value,
+.markdown-source-view.is-live-preview progress[value="100"]::-webkit-progress-value,
+.markdown-preview-view progress[value="100"]::-webkit-progress-value {
+  background-color: var(--progress-complete);
+}
+
+/* ============================================================
+   8 · EDITOR / MARKDOWN — CodeMirror, code, math, blockquotes,
+       callouts, tables, links, images
+   ============================================================ */
+
+/* --- Editor --- */
+.cm-editor {
+  background: transparent;
+}
+
+.markdown-source-view.mod-cm6 .cm-scroller {
+  font-family: var(--font-text);
+  line-height: var(--line-height-normal);
+}
+
+.markdown-source-view {
+  color: var(--text-normal);
+}
+
+/* Inline HTML in the editor uses the same highlight as reading mode. */
+.markdown-source-view.mod-cm6 mark {
+  background-color: var(--text-highlight-bg);
+  color: var(--text-normal);
+}
+
+/* Headings, lists, and paragraphs retain their native layout. */
+/* Markdown formatting */
+.cm-formatting:not(.cm-formatting-code-block):not(.cm-formatting-hashtag) {
+  color: var(--text-formatting);
+}
+
+/* Obsidian reserves space for line numbers and folding controls. */
+.cm-editor .cm-lineNumbers {
+  background-color: var(--ordo-c-bg-surface);
+}
+
+.cm-editor .cm-lineNumbers .cm-gutterElement {
+  min-width: 32px;
+  padding-inline-end: 0.5em;
+  color: var(--line-number-color);
+}
+
+.cm-editor .cm-lineNumbers .cm-gutterElement.cm-active,
+.cm-editor .cm-gutterElement.cm-active .cm-heading-marker {
+  color: var(--line-number-color-active);
+}
+
+/* Active line */
+.active-line-on .workspace-leaf-content[data-type=markdown] .cm-line.cm-active {
+  background-color: var(--active-line-bg);
+  box-shadow: -25vw 0 var(--active-line-bg), 25vw 0 var(--active-line-bg);
+}
+
+/* --- Code: matching cards in reading mode and native editor layers --- */
+.markdown-rendered pre,
+.markdown-preview-view pre {
+  background: var(--code-background);
+  border-radius: var(--code-radius);
+  box-shadow: var(--ordo-shadow-rest);
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-family: var(--font-monospace);
+  font-size: var(--code-size);
+  line-height: var(--ordo-code-line-height);
+}
+
+/* CodeMirror controls line spacing, code fences, and indentation. */
+.markdown-source-view.mod-cm6 .HyperMD-codeblock {
+  font-family: var(--font-monospace);
+  font-size: var(--code-size);
+  line-height: var(--ordo-code-line-height);
+}
+
+/* All lines share a layer so language labels, copy buttons, and
+   folding controls can extend beyond a line without being obscured. */
+.markdown-source-view.mod-cm6 .cm-content {
+  isolation: isolate;
+}
+
+/* Use the same shadow token as reading mode. The shared content layer
+   lets native backgrounds cover the seams between lines while labels
+   and controls remain fully visible above the block. */
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: var(--ordo-shadow-rest);
+  pointer-events: none;
+}
+
+/* Add a subtle outer halo without changing the block's fill or size.
+   Editor lines are siblings without a shared card element; anchors
+   delimit only the block under the pointer. */
+@media screen and (hover: hover) {
+  .markdown-rendered pre,
+  .markdown-preview-view pre,
+  .markdown-source-view.mod-cm6 .cm-content {
+    --ordo-code-halo-duration: var(--ordo-duration-normal);
+  }
+
+  .markdown-rendered pre,
+  .markdown-preview-view pre {
+    transition: box-shadow var(--ordo-code-halo-duration) var(--ordo-ease);
+  }
+
+  .markdown-rendered pre:hover,
+  .markdown-preview-view pre:hover {
+    box-shadow: var(--ordo-shadow-rest), var(--ordo-code-halo);
+  }
+
+  @supports (anchor-name: --ordo-code-start) and (anchor-scope: --ordo-code-start) and (top: anchor(top)) {
+    .markdown-source-view.mod-cm6 .cm-content {
+      position: relative;
+      anchor-scope: --ordo-code-start, --ordo-code-end;
+    }
+
+    /* Queries are limited to code fences and mounted CodeMirror lines;
+       they do not invalidate the document or the rest of the interface. */
+    .markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg:hover,
+    .markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg:has(~ .HyperMD-codeblock-bg:hover):not(:has(~ .HyperMD-codeblock-end-bg ~ .HyperMD-codeblock-bg:hover)) {
+      anchor-name: --ordo-code-start;
+    }
+
+    .markdown-source-view.mod-cm6 .HyperMD-codeblock-end-bg:hover,
+    .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg:hover:not(.HyperMD-codeblock-end-bg) ~ .HyperMD-codeblock-end-bg:not(.HyperMD-codeblock-bg:hover ~ .HyperMD-codeblock-end-bg ~ .HyperMD-codeblock-end-bg) {
+      anchor-name: --ordo-code-end;
+    }
+
+    .markdown-source-view.mod-cm6 .cm-content::after {
+      content: '';
+      position: absolute;
+      top: anchor(--ordo-code-start top, 0px);
+      bottom: anchor(--ordo-code-end bottom, 0px);
+      left: anchor(--ordo-code-start left, -10000px);
+      width: anchor-size(--ordo-code-start width, 0px);
+      z-index: -1;
+      border-radius: var(--code-radius);
+      box-shadow: var(--ordo-code-halo);
+      opacity: 0;
+      pointer-events: none;
+      /* Keep the previous bounds until the fade finishes. */
+      transition: opacity var(--ordo-code-halo-duration) var(--ordo-ease),
+        left 0s var(--ordo-code-halo-duration),
+        top 0s var(--ordo-code-halo-duration),
+        bottom 0s var(--ordo-code-halo-duration),
+        width 0s var(--ordo-code-halo-duration);
+    }
+
+    .markdown-source-view.mod-cm6 .cm-content:has(> .HyperMD-codeblock-bg:hover)::after {
+      opacity: 1;
+      transition-delay: 0s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .markdown-rendered pre,
+    .markdown-preview-view pre,
+    .markdown-source-view.mod-cm6 .cm-content {
+      --ordo-code-halo-duration: 0ms;
+    }
+  }
+}
+
+/* Native tokens also join backticks correctly while editing, without
+   repeating borders and padding around every code fragment. */
+.markdown-rendered :not(pre) > code,
+.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-codeblock) .cm-inline-code {
+  --code-background: var(--ordo-c-bg-elevated);
+  --code-border-width: var(--ordo-border-width);
+  --code-border-color: var(--ordo-c-border-rest);
+  --code-radius: 4px;
+}
+
+/* Inline math is neutralized: LMath manages its own styling. */
+
+.markdown-rendered pre code,
+.markdown-preview-view pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* In reading mode, the card contains formulas wider than the note.
+   Only the contents scroll; the frame and lift surround the formula. */
+.markdown-preview-view .math-block {
+  display: block;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown-preview-view .math-block > mjx-container[display='true'] {
+  min-inline-size: max-content;
+  margin-block: 0;
+  padding-block: 1em;
+}
+
+/* --- Blockquotes --- */
+.markdown-rendered blockquote,
+.markdown-preview-view blockquote {
+  border-inline-start: var(--blockquote-border-thickness) solid var(--blockquote-border-color);
+  padding-inline-start: 1.1em;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.markdown-source-view.mod-cm6 .HyperMD-quote {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.markdown-rendered blockquote p,
+.markdown-preview-view blockquote p {
+  margin-block-end: 0.5rem;
+}
+
+/* --- Callouts --- */
+.callout {
+  background: var(--ordo-c-bg-surface);
+  border-color: var(--ordo-c-border-rest);
+  padding: var(--callout-padding);
+  margin-block-end: var(--ordo-p-spacing);
+}
+
+.callout-title {
+  font-weight: 600;
+  font-size: var(--callout-title-size);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ordo-c-text-1);
+  margin-bottom: 0.5rem;
+}
+
+.callout-content {
+  color: var(--ordo-c-text-2);
+  line-height: var(--ordo-line-height);
+}
+
+.callout[data-callout="info"],
+.callout[data-callout="todo"] { --callout-color: var(--color-blue-rgb); }
+.callout[data-callout="note"],
+.callout[data-callout="quote"] { --callout-color: 117, 117, 127; }
+.callout[data-callout="abstract"],
+.callout[data-callout="summary"],
+.callout[data-callout="tldr"] { --callout-color: var(--color-purple-rgb); }
+.callout[data-callout="tip"],
+.callout[data-callout="hint"],
+.callout[data-callout="important"],
+.callout[data-callout="example"] { --callout-color: var(--color-cyan-rgb); }
+.callout[data-callout="success"],
+.callout[data-callout="check"],
+.callout[data-callout="done"] { --callout-color: var(--color-green-rgb); }
+.callout[data-callout="question"],
+.callout[data-callout="help"],
+.callout[data-callout="faq"] { --callout-color: var(--color-yellow-rgb); }
+.callout[data-callout="warning"],
+.callout[data-callout="caution"],
+.callout[data-callout="attention"],
+.callout[data-callout="warn"] { --callout-color: var(--color-orange-rgb); }
+.callout[data-callout="danger"],
+.callout[data-callout="error"],
+.callout[data-callout="bug"],
+.callout[data-callout="fail"],
+.callout[data-callout="missing"] { --callout-color: var(--color-red-rgb); }
+
+.callout[data-callout="info"],
+.callout[data-callout="todo"],
+.callout[data-callout="abstract"],
+.callout[data-callout="summary"],
+.callout[data-callout="tldr"],
+.callout[data-callout="tip"],
+.callout[data-callout="hint"],
+.callout[data-callout="important"],
+.callout[data-callout="example"],
+.callout[data-callout="success"],
+.callout[data-callout="check"],
+.callout[data-callout="done"],
+.callout[data-callout="question"],
+.callout[data-callout="help"],
+.callout[data-callout="faq"],
+.callout[data-callout="warning"],
+.callout[data-callout="caution"],
+.callout[data-callout="attention"],
+.callout[data-callout="warn"],
+.callout[data-callout="danger"],
+.callout[data-callout="error"],
+.callout[data-callout="bug"],
+.callout[data-callout="fail"],
+.callout[data-callout="missing"] {
+  border-left-color: rgb(var(--callout-color));
+}
+
+/* Code, callouts, blockquotes, and tasks share the same halo. Inside
+   a callout, highlight its card without adding halos to each task or quote. */
+@media screen and (hover: hover) {
+  .callout,
+  .markdown-rendered blockquote:not(.callout *),
+  .markdown-preview-view blockquote:not(.callout *),
+  .markdown-rendered .task-list-item:not(.callout *),
+  .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-task-line) {
+    --ordo-block-halo-duration: var(--ordo-duration-normal);
+    transition: box-shadow var(--ordo-block-halo-duration) var(--ordo-ease);
+  }
+
+  /* The native widget contains paint and clips on hover. Reserve room
+     for the shadow without disabling contain: paint or changing dimensions. */
+  .markdown-source-view.mod-cm6 .cm-callout {
+    --embed-block-shadow-hover: none;
+    overflow-clip-margin: 24px;
+  }
+
+  .markdown-source-view.mod-cm6 .cm-embed-block.cm-callout:hover {
+    overflow: visible;
+    border-radius: var(--callout-radius);
+  }
+
+  .callout:hover,
+  .markdown-source-view.mod-cm6 .cm-callout:hover > .markdown-rendered > .callout,
+  .markdown-rendered blockquote:not(.callout *):hover,
+  .markdown-preview-view blockquote:not(.callout *):hover,
+  .markdown-rendered .task-list-item:not(.callout *):hover,
+  .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-task-line):hover {
+    box-shadow: var(--ordo-code-halo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .callout,
+    .markdown-rendered blockquote:not(.callout *),
+    .markdown-preview-view blockquote:not(.callout *),
+    .markdown-rendered .task-list-item:not(.callout *),
+    .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-task-line) {
+      --ordo-block-halo-duration: 0ms;
+    }
+  }
+}
+
+/* Block lift: surfaces grow from the center without moving upward
+   or changing the note's layout. The original baseline is stored at
+   .dev/checkpoints/before-block-lift-01/theme.css. */
+@media screen and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  body:not(.is-mobile):not(.disable-animations) {
+    --ordo-block-lift-shadow: var(--ordo-shadow-m), var(--ordo-code-halo);
+    --ordo-block-lift-scale: 1.012;
+    --ordo-block-lift-duration: calc(var(--ordo-duration-normal) * 1.5);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .callout,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content {
+    --ordo-block-halo-duration: calc(var(--ordo-duration-normal) * 1.5);
+    --ordo-code-halo-duration: calc(var(--ordo-duration-normal) * 1.5);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .callout:not(.callout *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered :is(pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.callout *):not(blockquote *):not(ul *):not(ol *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-embed-block {
+    transition: box-shadow var(--ordo-block-lift-duration) var(--ordo-ease),
+      scale var(--ordo-block-lift-duration) var(--ordo-ease), opacity 0.25s linear;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-preview-view .callout:not(.callout *):not(.cm-embed-block *):not(.markdown-embed *):not(.file-embed *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered :is(pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.cm-embed-block *):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.cm-embed-block, .image-embed:not(.cm-embed-block *)) {
+    scale: 1;
+    transition: scale var(--ordo-block-lift-duration) var(--ordo-ease),
+      box-shadow var(--ordo-block-lift-duration) var(--ordo-ease), opacity 0.25s linear;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-preview-view .callout:not(.callout *):not(.cm-embed-block *):not(.markdown-embed *):not(.file-embed *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered :is(pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.cm-embed-block *):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-preview-view .markdown-preview-sizer > :is(.el-pre, .el-div, .el-blockquote, .el-table, .el-ul, .el-ol, .el-p):hover :is(.callout, pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.cm-embed-block *):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.cm-embed-block, .image-embed:not(.cm-embed-block *)):hover {
+    scale: var(--ordo-block-lift-scale);
+  }
+
+  /* Sibling code, quote, and list lines respond to hover together,
+     independently of the text caret. The shared code frame remains
+     a single card, including empty rows. */
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line) {
+    position: relative;
+    scale: none;
+    transform-origin: center;
+    transition: scale var(--ordo-edit-hover-duration, var(--ordo-block-lift-duration)) var(--ordo-ease),
+      z-index 0s var(--ordo-code-layer-delay, var(--ordo-block-lift-duration)) allow-discrete;
+  }
+
+  /* The opening fence contains controls that extend across following
+     lines. Keep its layer until the exit animation finishes. */
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg {
+    z-index: var(--ordo-code-first-layer, auto);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg::before {
+    /* The opaque overlap covers subpixel seams throughout the transition,
+       including while the shared background appears or disappears. */
+    top: -1px;
+    bottom: -1px;
+    background-color: var(--code-background);
+    box-shadow: var(--ordo-code-line-shadow, var(--ordo-shadow-rest));
+    transition: box-shadow 0s var(--ordo-code-layer-delay, var(--ordo-block-lift-duration));
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg::before {
+    top: 0;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-end-bg::before {
+    bottom: 0;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg {
+    --ordo-edit-row-scale: var(--ordo-block-lift-scale);
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg:hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg:has(~ .HyperMD-codeblock-bg:hover):not(.HyperMD-codeblock-end-bg):not(:has(~ .HyperMD-codeblock-end-bg ~ .HyperMD-codeblock-bg:hover)),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg:hover:not(.HyperMD-codeblock-end-bg) ~ .HyperMD-codeblock-bg:not(.HyperMD-codeblock-bg:hover ~ .HyperMD-codeblock-end-bg ~ .HyperMD-codeblock-bg),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):has(~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover):not(:has(~ :not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock)) ~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover)),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover ~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover ~ :not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock)) ~ *) {
+    scale: var(--ordo-edit-hover-scale, var(--ordo-edit-row-scale, var(--ordo-block-lift-scale)));
+    --ordo-code-first-layer: 2;
+    --ordo-code-line-shadow: none;
+    --ordo-code-layer-delay: 0s;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-editor:has(.cm-selectionBackground) {
+    --ordo-edit-hover-scale: none;
+    --ordo-edit-hover-duration: 0ms;
+    --ordo-code-row-factor: 1;
+    --ordo-code-frame-factor: 1;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content > [contenteditable='false'] {
+    overflow-clip-margin: 32px;
+  }
+
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-embed-block:not(.cm-table-widget, .cm-lang-base):hover {
+    --embed-block-shadow-hover: none;
+    overflow: clip;
+    overflow-clip-margin: 32px;
+  }
+
+  /* The native container is the full activation area, including padding
+     and empty margins around its inner card. Descendants of another card
+     lift with it instead of duplicating the effect. */
+  body:not(.is-mobile):not(.disable-animations) .markdown-preview-view .markdown-preview-sizer > :is(.el-pre, .el-div, .el-blockquote, .el-table, .el-ul, .el-ol, .el-p):hover :is(.callout, pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.cm-embed-block *):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *),
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-embed-block:hover :is(.callout, pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.callout *):not(blockquote *):not(ul *):not(ol *):not(.markdown-embed *):not(.file-embed *):not(.mermaid *):not(.lmath-container *),
+  body:not(.is-mobile):not(.disable-animations) .callout:not(.callout *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered :is(pre, blockquote, ul, ol, table, img:not(.emoji), video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block):not(.callout *):not(blockquote *):not(ul *):not(ol *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .image-embed:not(.cm-embed-block *):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-embed-block:not(:has(.callout, pre, blockquote, ul, ol, table, img, video, .markdown-embed, .file-embed, .mermaid, .lmath-container, .math-block)):hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-callout:hover > .markdown-rendered > .callout {
+    box-shadow: var(--ordo-block-lift-shadow);
+  }
+
+  /* Tasks belong to their list, and editor quotes belong to their block;
+     avoid adding an independent shadow around each line. */
+  body:not(.is-mobile):not(.disable-animations) .markdown-rendered .task-list-item:hover,
+  body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover:not(.active-line-on .cm-active) {
+    box-shadow: none;
+  }
+
+  @supports (anchor-name: --ordo-lift-start) and (anchor-scope: --ordo-lift-start) and (top: anchor(top)) {
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content {
+      anchor-scope: --ordo-code-start, --ordo-code-end, --ordo-lift-start, --ordo-lift-end;
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content::after {
+      /* Use one background and one expansion for all code rows. */
+      top: calc(anchor(--ordo-code-start top, 0px) + anchor-size(--ordo-code-start height, 0px) * (1 - 1 / var(--ordo-code-row-factor, var(--ordo-block-lift-scale))) / 2);
+      bottom: calc(anchor(--ordo-code-end bottom, 0px) + anchor-size(--ordo-code-end height, 0px) * (1 - 1 / var(--ordo-code-row-factor, var(--ordo-block-lift-scale))) / 2);
+      background-color: var(--code-background);
+      box-shadow: var(--ordo-block-lift-shadow);
+      scale: 1;
+      transform-origin: center;
+      transition: opacity var(--ordo-code-halo-duration) var(--ordo-ease),
+        scale var(--ordo-edit-hover-duration, var(--ordo-block-lift-duration)) var(--ordo-ease),
+        left 0s var(--ordo-code-halo-duration),
+        top 0s var(--ordo-code-halo-duration),
+        bottom 0s var(--ordo-code-halo-duration),
+        width 0s var(--ordo-code-halo-duration);
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content:has(> .HyperMD-codeblock-bg:hover)::after {
+      scale: 1 var(--ordo-code-frame-factor, var(--ordo-block-lift-scale));
+      transition-delay: 0s;
+    }
+
+    /* Find the first and last lines of the contiguous group under the
+       pointer. Queries cover only visible quote and list lines. */
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock) + *):hover,
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock) + *):has(~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover):not(:has(~ :not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock)) ~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover)) {
+      anchor-name: --ordo-lift-start;
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:has(+ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock))):hover,
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover ~ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:has(+ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock))):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover ~ :not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock)) ~ *) {
+      anchor-name: --ordo-lift-end;
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):not(:is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock) + *):not(:has(+ :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock))):hover {
+      anchor-name: --ordo-lift-start, --ordo-lift-end;
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content::before {
+      content: '';
+      position: absolute;
+      top: anchor(--ordo-lift-start top, 0px);
+      bottom: anchor(--ordo-lift-end bottom, 0px);
+      left: anchor(--ordo-lift-start left, -10000px);
+      width: anchor-size(--ordo-lift-start width, 0px);
+      box-shadow: var(--ordo-block-lift-shadow);
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity var(--ordo-block-lift-duration) var(--ordo-ease),
+        left 0s var(--ordo-block-lift-duration),
+        top 0s var(--ordo-block-lift-duration),
+        bottom 0s var(--ordo-block-lift-duration),
+        width 0s var(--ordo-block-lift-duration);
+    }
+
+    body:not(.is-mobile):not(.disable-animations) .markdown-source-view.mod-cm6 .cm-content:has(> :is(.HyperMD-quote, .HyperMD-list-line):not(.HyperMD-codeblock):hover)::before {
+      opacity: 1;
+      transition-delay: 0s;
+    }
+  }
+}
+
+/* The browser caret follows text transforms automatically. Use it
+   in code, quotes, and lists, including reduced or disabled motion,
+   to avoid restoring a layer with stale coordinates. Group hover
+   is independent of the line containing the text caret. */
+body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine)) > .cm-scroller > :is(.cm-cursorLayer, .cm-selectionLayer) {
+  visibility: hidden;
+}
+
+/* eslint-disable css/no-important -- CodeMirror hides the native caret and selection with !important. This scoped exception restores them only while editing animated blocks. */
+/* The active line identifies the caret without querying other rows. */
+body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused .cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine) {
+  caret-color: var(--caret-color) !important;
+}
+
+body:not(.is-mobile) .markdown-source-view.mod-cm6 .cm-editor.cm-focused:has(.cm-content > :is(.HyperMD-codeblock-bg, .HyperMD-quote, .HyperMD-list-line):is(.cm-active, .cm-activeLine)) .cm-content *::selection {
+  background-color: var(--text-selection) !important;
+}
+/* eslint-enable css/no-important */
+
+/* --- Tables: native alignment, cells, headers, and controls --- */
+.cm-s-obsidian .HyperMD-table-row span.cm-hmd-table-sep,
+.cm-hmd-table-sep-dummy {
+  color: var(--ordo-c-text-3);
+  font-weight: 400;
+}
+
+/* --- Links: a permanent thin underline with a subtle accent tint --- */
+:is(.markdown-preview-view, .markdown-rendered) a[href]:not(.tag):not(.is-unresolved):not(.footnote-link):not(.footnote-backref),
+.cm-s-obsidian :is(span.cm-link, span.cm-hmd-internal-link, span.cm-url):not(.cm-formatting) {
+  --ordo-link-underline-color: color-mix(in srgb, currentColor 55%, transparent);
+  color: var(--link-color);
+  text-decoration: underline solid var(--ordo-link-underline-color) var(--link-decoration-thickness);
+  text-underline-offset: 0.18em;
+  transition: color var(--ordo-duration-normal) var(--ordo-ease),
+    text-decoration-color var(--ordo-duration-normal) var(--ordo-ease);
+}
+
+:is(.markdown-preview-view, .markdown-rendered) a[href]:not(.tag):not(.is-unresolved):not(.footnote-link):not(.footnote-backref):is(:hover, :focus-visible),
+.cm-s-obsidian :is(span.cm-link, span.cm-hmd-internal-link, span.cm-url):not(.cm-formatting):is(:hover, :focus-within) {
+  --ordo-link-underline-color: currentColor;
+  color: var(--link-color-hover);
+}
+
+/* In Live Preview, a link may be wrapped in a span. Underline it once
+   and let the text inherit the state of the entire fragment. */
+.cm-s-obsidian :is(span.cm-link, span.cm-hmd-internal-link, span.cm-url) a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.external-link {
+  background-image: none;
+  padding-right: 0;
+}
+
+/* Tags use the same text and states in reading mode and editor fragments. */
+.markdown-rendered a.tag,
+.cm-s-obsidian span.cm-hashtag {
+  color: var(--tag-color);
+  text-decoration: var(--tag-decoration);
+  transition: color var(--ordo-duration-normal) var(--ordo-ease);
+}
+
+@media (hover: hover) {
+  .markdown-rendered a.tag:hover,
+  .cm-s-obsidian span.cm-hashtag:hover {
+    background-color: var(--tag-background-hover);
+    border-color: var(--tag-border-color-hover);
+    color: var(--tag-color-hover);
+    text-decoration: var(--tag-decoration-hover);
+  }
+}
+
+/* --- Images --- */
+.markdown-source-view video,
+.markdown-source-view img:not(.emoji),
+.markdown-rendered video,
+.markdown-rendered img:not(.emoji) {
+  border-radius: var(--image-radius);
+  max-width: 100%;
+  height: auto;
+}
+
+.theme-dark .markdown-source-view img:not(.emoji),
+.theme-dark .markdown-preview-view img:not(.emoji) {
+  opacity: var(--ordo-c-image-dim);
+  transition: opacity 0.25s linear;
+}
+
+.theme-dark .print-preview img,
+.theme-dark .markdown-source-view img:hover,
+.theme-dark .markdown-preview-view img:hover {
+  opacity: 1;
+}
+
+@media print {
+  body {
+    --ordo-image-dim: 1;
+  }
+}
+
+/* Image fragments */
+.theme-dark img[src$="#invert"],
+.theme-dark div[src$="#invert"] img,
+.theme-dark span[src$="#invert"] img {
+  filter: invert(1) hue-rotate(180deg);
+  mix-blend-mode: screen;
+}
+
+.theme-dark img[src$="#blend"],
+.theme-dark div[src$="#blend"] img,
+.theme-dark span[src$="#blend"] img,
+.theme-dark .img-blend {
+  mix-blend-mode: screen;
+}
+
+img[src$="#circle"]:not(.emoji),
+span[src$="#circle"] img:not(.emoji),
+span[src$="#round"] img:not(.emoji) {
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+}
+
+img[src$="#outline"],
+div[src$="#outline"] img,
+span[src$="#outline"] img {
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+}
+
+img[src$="#interface"],
+span[src$="#interface"] img {
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+  box-shadow: var(--ordo-shadow-rest);
+  margin-top: 10px;
+  margin-bottom: 15px;
+  border-radius: var(--ordo-radius-m);
+}
+
+/* --- Horizontal rule --- */
+.markdown-preview-view hr,
+.markdown-source-view.mod-cm6 .HyperMD-hr hr {
+  border: none;
+  border-top: 1px solid var(--ordo-c-border-rest);
+  margin: 2rem auto;
+  opacity: 0.5;
+}
+
+/* ============================================================
+   9 · READING WIDTH / EMBEDS
+   ============================================================ */
+
+/* Match Obsidian's 700px width independently of text size. The editor
+   and reading mode retain native sizers, margins, and layout behavior.
+   Smaller text fits more words without narrowing the column.
+   The wide and max classes are explicit user options. */
+.markdown-source-view,
+.markdown-preview-view {
+  --file-line-width: calc(var(--ordo-line-width) * var(--ordo-width-scale));
+}
+
+/* Embeds */
+.markdown-embed .markdown-preview-view {
+  padding: 0;
+}
+
+.internal-embed .markdown-embed {
+  border: 0;
+  border-left: 1px solid var(--quote-opening-modifier);
+  border-radius: 0;
+  background: var(--ordo-c-bg-surface);
+}
+
+.markdown-embed-link,
+.file-embed-link {
+  top: 0;
+  right: 0;
+  opacity: 0.6;
+  transition: opacity 0.1s linear;
+}
+
+.markdown-embed .file-embed-link:hover,
+.markdown-embed .markdown-embed-link:hover {
+  opacity: 1;
+}
+
+.markdown-embed .markdown-preview-view .markdown-preview-sizer {
+  padding-bottom: 0;
+}
+
+/* ============================================================
+   10 · SIDEBAR / NAV — file explorer, backlinks, tags
+   ============================================================ */
+
+/* Match LMath's LaTeX card background: 85% note background and 15%
+   black in both color schemes, without depending on the plugin.
+   One token paints both animated selection and its native fallback. */
+.nav-files-container,
+.modal.mod-settings .vertical-tab-header {
+  --nav-item-background-active: color-mix(in srgb, var(--background-primary) 85%, #000);
+}
+
+/* Dots follow their folder's actual guide even when Obsidian extends
+   the row to the left to paint the full selection. */
+.nav-files-container {
+  --ordo-nav-dot-size: 8px;
+  --ordo-nav-dot-color: var(--ordo-c-border-rest);
+}
+
+.nav-files-container .nav-file-title.is-active {
+  --ordo-nav-dot-color: var(--ordo-c-text-1);
+}
+
+@supports (anchor-name: --ordo-explorer-label) and (anchor-scope: --ordo-explorer-label) {
+  /* The guide joins the centers of the first and last rows. A transparent
+     border preserves native indentation without extending the guide's ends. */
+  .nav-files-container .nav-folder-children {
+    position: relative;
+    border-inline-start-color: transparent;
+    anchor-scope: --ordo-guide-first, --ordo-guide-last;
+  }
+
+  .nav-files-container .nav-folder-children::after {
+    content: '';
+    position: absolute;
+    inset-block-start: anchor(--ordo-guide-first center, 50%);
+    inset-block-end: anchor(--ordo-guide-last center, 50%);
+    inset-inline-start: calc(0px - var(--nav-indentation-guide-width));
+    inline-size: var(--nav-indentation-guide-width);
+    border-radius: var(--ordo-radius-full);
+    background-color: var(--nav-indentation-guide-color);
+    pointer-events: none;
+  }
+
+  .nav-files-container .nav-file-title {
+    anchor-scope: --ordo-explorer-label;
+  }
+
+  .nav-files-container .nav-file-title-content {
+    anchor-name: --ordo-explorer-label;
+  }
+
+  .nav-files-container .nav-folder-children > :nth-child(1 of .tree-item:not(.is-filtered-out)) > .tree-item-self > .tree-item-inner {
+    anchor-name: --ordo-explorer-label, --ordo-guide-first;
+  }
+
+  .nav-files-container .nav-folder-children > :nth-last-child(1 of .tree-item:not(.is-filtered-out)) > .tree-item-self > .tree-item-inner {
+    anchor-name: --ordo-explorer-label, --ordo-guide-last;
+  }
+
+  .nav-files-container .nav-folder-children > :nth-child(1 of .tree-item:not(.is-filtered-out)):nth-last-child(1 of .tree-item:not(.is-filtered-out)) > .tree-item-self > .tree-item-inner {
+    anchor-name: --ordo-explorer-label, --ordo-guide-first, --ordo-guide-last;
+  }
+
+  .nav-files-container .nav-folder-children > .nav-file > .nav-file-title > .nav-file-title-content::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 50%;
+    inset-inline-start: calc(anchor(--ordo-explorer-label start) - var(--nav-item-children-padding-start, var(--nav-item-children-padding-left)) - var(--ordo-nav-padding-inline) - var(--nav-indentation-guide-width) / 2 - var(--ordo-nav-dot-size) / 2);
+    inline-size: var(--ordo-nav-dot-size);
+    block-size: var(--ordo-nav-dot-size);
+    border-radius: var(--ordo-radius-full);
+    background-color: var(--ordo-nav-dot-color);
+    translate: 0 -50%;
+    pointer-events: none;
+  }
+
+  /* A short branch reaches the label without touching its letters. */
+  .nav-files-container .nav-folder-children > .nav-file > .nav-file-title > .nav-file-title-content::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: calc(anchor(--ordo-explorer-label start) - var(--nav-item-children-padding-start, var(--nav-item-children-padding-left)) - var(--ordo-nav-padding-inline) - var(--nav-indentation-guide-width) / 2 + var(--ordo-nav-dot-size) / 2);
+    inset-inline-end: calc(anchor(--ordo-explorer-label start) + var(--ordo-space-1));
+    block-size: var(--nav-indentation-guide-width);
+    background-color: var(--nav-indentation-guide-color);
+    translate: 0 -50%;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nav-files-container .nav-file-title-content::before {
+      transition: background-color var(--ordo-duration-normal) var(--ordo-ease);
+    }
+  }
+}
+
+.nav-file-title,
+.nav-folder-title {
+  border-radius: var(--ordo-radius-s);
+  padding: var(--nav-item-padding);
+  transition: var(--ordo-transition);
+}
+
+.modal.mod-settings .vertical-tab-nav-item {
+  border-radius: var(--nav-item-radius);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal.mod-settings .vertical-tab-nav-item {
+    transition: var(--ordo-transition);
+  }
+}
+
+.nav-file-title:hover,
+.nav-folder-title:hover {
+  background: var(--nav-item-background-hover);
+  color: var(--nav-item-color-hover);
+}
+
+.modal.mod-settings .vertical-tab-nav-item.is-active {
+  background-color: var(--nav-item-background-active);
+  color: var(--nav-item-color-active);
+}
+
+@media (hover: hover) {
+  body:not(.is-grabbing) .nav-files-container :is(.nav-file-title, .nav-folder-title):hover,
+  .modal.mod-settings .vertical-tab-nav-item:hover {
+    background-color: var(--nav-item-background-hover);
+    color: var(--nav-item-color-hover);
+  }
+}
+
+.nav-file-title.is-active,
+.nav-folder-title.is-active,
+.tree-item-self.is-active,
+.modal.mod-settings .vertical-tab-nav-item.is-active {
+  position: relative;
+  box-shadow: none;
+}
+
+/* A real border on a decoration does not change row dimensions.
+   This avoids the faint edge left by the old inset selection shadow. */
+.nav-file-title.is-active::after,
+.nav-folder-title.is-active::after,
+.tree-item-self.is-active::after,
+.modal.mod-settings .vertical-tab-nav-item.is-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: var(--ordo-border-width) solid var(--ordo-c-border-focus);
+  border-radius: inherit;
+  corner-shape: inherit;
+  pointer-events: none;
+}
+
+/* Clicking an open note again adds has-focus in the explorer.
+   That state uses the outline color as a fill without another shadow. */
+body:not(.is-phone) .workspace-leaf.mod-active .nav-files-container .tree-item-self.has-focus:not(.is-being-renamed) {
+  --ordo-nav-focused-fill: var(--ordo-c-border-focus);
+  background-color: var(--ordo-nav-focused-fill);
+  color: var(--text-on-accent);
+  box-shadow: none;
+}
+
+.nav-folder-title-content {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0.05em;
+  font-size: var(--font-adaptive-smallest);
+  color: var(--ordo-c-text-3);
+}
+
+/* Each list shares a selection surface that slides between rows,
+   preserves folder indentation, and leaves multiple selection intact.
+   Each list has its own anchor, including menus and split panels. */
+@supports (anchor-name: --ordo-selection) and (anchor-scope: --ordo-selection) and (top: anchor(top)) and (width: anchor-size(width)) and (position-visibility: anchors-visible) {
+  @media (prefers-reduced-motion: no-preference) {
+    body:not(.is-mobile):not(.is-grabbing) :where(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .horizontal-tab-header,
+      .prompt-results,
+      .suggestion-container > .suggestion,
+      .menu-scroll,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content,
+      :is(.mod-left-split, .mod-right-split) .workspace-tab-header-container-inner,
+      .cm-tooltip.cm-tooltip-autocomplete > ul[role='listbox']
+    ) {
+      position: relative;
+      isolation: isolate;
+      anchor-scope: --ordo-selection;
+      --ordo-selection-content: '';
+      --ordo-selection-fill: var(--background-modifier-hover);
+      --ordo-selection-border: transparent;
+      --ordo-selection-border-width: 0px;
+      --ordo-selection-radius: var(--radius-s);
+      --ordo-selection-motion: calc(var(--ordo-duration-normal) * 1.5);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .modal.mod-settings .vertical-tab-header-group-container,
+      .modal.mod-settings .setting-search-results,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content
+    ) {
+      --ordo-selection-content: none;
+      --ordo-selection-fill: var(--nav-item-background-active);
+      --ordo-selection-border: var(--ordo-c-border-focus);
+      --ordo-selection-border-width: var(--ordo-border-width);
+      --ordo-selection-radius: var(--nav-item-radius);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(.vertical-tab-header-group-container, .setting-search-results, .horizontal-tab-header):where(:not(.modal.mod-settings *)) {
+      --ordo-selection-radius: var(--radius-m);
+    }
+
+    /* Outlined lists must suppress the empty frame. Other lists use
+       the anchor's size and visibility. */
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .modal.mod-settings .vertical-tab-header-group-container,
+      .modal.mod-settings .setting-search-results,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content
+    ):has(:is(.tree-item-self, .nav-file-title, .nav-folder-title, .vertical-tab-nav-item).is-active) {
+      --ordo-selection-content: '';
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .horizontal-tab-header,
+      .prompt-results,
+      .suggestion-container > .suggestion,
+      .menu-scroll,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content,
+      :is(.mod-left-split, .mod-right-split) .workspace-tab-header-container-inner,
+      .cm-tooltip.cm-tooltip-autocomplete > ul[role='listbox']
+    )::after {
+      content: var(--ordo-selection-content);
+      position: absolute;
+      position-anchor: --ordo-selection;
+      position-visibility: anchors-visible;
+      /* Without an anchor, auto prevents interpolation from outside the list. */
+      left: anchor(left);
+      top: anchor(top);
+      width: anchor-size(width);
+      height: anchor-size(height);
+      box-sizing: border-box;
+      border: var(--ordo-selection-border-width) solid var(--ordo-selection-border);
+      border-radius: var(--ordo-selection-radius);
+      corner-shape: var(--corner-shape, round);
+      background: var(--ordo-selection-fill);
+      background-clip: padding-box;
+      pointer-events: none;
+      z-index: -1;
+      transition: left var(--ordo-selection-motion) var(--ordo-ease),
+        top var(--ordo-selection-motion) var(--ordo-ease),
+        width var(--ordo-selection-motion) var(--ordo-ease),
+        height var(--ordo-selection-motion) var(--ordo-ease);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .horizontal-tab-header,
+      .prompt-results,
+      .suggestion-container > .suggestion,
+      .menu-scroll,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content,
+      :is(.mod-left-split, .mod-right-split) .workspace-tab-header-container-inner,
+      .cm-tooltip.cm-tooltip-autocomplete > ul[role='listbox']
+    ) :is(
+      .tree-item-self.is-active,
+      .nav-file-title.is-active,
+      .nav-folder-title.is-active,
+      .vertical-tab-nav-item.is-active,
+      .horizontal-tab-nav-item.is-active,
+      .suggestion-item.is-selected:not(.mod-toggle),
+      .menu-item.selected:not(.is-disabled):not(.is-label),
+      .workspace-tab-header.is-active,
+      [role='tab'][aria-selected='true'],
+      [role='option'][aria-selected='true']
+    ) {
+      anchor-name: --ordo-selection;
+      background-color: var(--ordo-nav-focused-fill, transparent);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .modal.mod-settings .vertical-tab-header-group-container,
+      .modal.mod-settings .setting-search-results,
+      .workspace-leaf-content[data-type='outline'] .view-content,
+      .workspace-leaf-content[data-type='bookmarks'] .view-content
+    ) :is(.nav-file-title, .nav-folder-title, .tree-item-self, .vertical-tab-nav-item).is-active::after {
+      display: none;
+    }
+  }
+}
+
+/* Hover uses one shared surface per group, matching menus. It stays
+   separate from selection so the pointer can visit other options
+   without moving the outline of the active note or setting. The vault
+   profile shares a surface across its name and action icons so both
+   position and dimensions interpolate between differently sized targets. */
+@supports (anchor-name: --ordo-hover) and (anchor-scope: --ordo-hover) and (top: anchor(top)) and (width: anchor-size(width)) and (position-visibility: anchors-visible) and (transition: anchor-name 0s calc(infinity * 1s) allow-discrete) {
+  @media screen and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .horizontal-tab-header,
+      .workspace-leaf-content:is([data-type='outline'], [data-type='bookmarks'], [data-type='all-properties']) .view-content,
+      .tag-container,
+      .backlink-pane,
+      .outgoing-link-pane,
+      .search-result-container,
+      .workspace-tab-header-container-inner,
+      .nav-buttons-container,
+      .view-actions,
+      .view-header-nav-buttons,
+      .side-dock-actions,
+      .side-dock-settings,
+      .workspace-sidedock-vault-profile,
+      .modal-button-container,
+      .setting-item-control,
+      .status-bar
+    ) {
+      /* Keep the existing selection scope independent. */
+      anchor-scope: --ordo-selection, --ordo-hover;
+      isolation: isolate;
+      --ordo-hover-fill: var(--background-modifier-hover);
+      --ordo-hover-radius: var(--radius-s);
+      --ordo-hover-motion: calc(var(--ordo-duration-normal) * 1.5);
+      --ordo-hover-row-transition: var(--ordo-transition);
+
+      /* Retain the last anchor across gaps, like .selected in a menu.
+         The discrete change stays pending while the pointer is in this group.
+         Entering another row cancels it before assigning the new anchor,
+         so upward movement also works without simultaneous references. */
+      &:hover {
+        --ordo-hover-row-transition: var(--ordo-transition),
+          anchor-name 0s calc(infinity * 1s) allow-discrete;
+      }
+
+      &:has(:is(
+        .tree-item-self,
+        .nav-file-title,
+        .nav-folder-title,
+        .vertical-tab-nav-item,
+        .horizontal-tab-nav-item,
+        .workspace-tab-header,
+        .search-result-file-title,
+        .search-result-file-match,
+        .workspace-drawer-vault-switcher,
+        :is(.nav-buttons-container, .view-actions, .view-header-nav-buttons, .side-dock-actions, .side-dock-settings, .workspace-sidedock-vault-profile, .setting-item-control, .modal-button-container) .clickable-icon,
+        .status-bar-item:is(.mod-clickable, .plugin-editor-status, .plugin-sync),
+        :is(.setting-item-control, .modal-button-container) button:not(.mod-cta, .mod-warning)
+      ):not(.is-disabled, :disabled, [aria-disabled='true']):hover) {
+        --ordo-hover-row-transition: var(--ordo-transition);
+      }
+
+      &:not(.status-bar, .mod-root .workspace-tab-header-container-inner) {
+        position: relative;
+      }
+
+      /* Keep the outline above hover, but clear its opaque fill while the
+         pointer is in the group. The retained hover stays visible in gaps
+         and while moving away from the active row. */
+      &:is(.nav-files-container, .vertical-tab-header-group-container, .setting-search-results, .mod-root .workspace-tab-header-container-inner, .workspace-leaf-content .view-content):hover::after {
+        background-color: transparent;
+      }
+
+      /* Search reserves ::before for its loading indicator. */
+      &:not(.search-result-container)::before,
+      &.search-result-container::after {
+        content: '';
+        position: absolute;
+        position-anchor: --ordo-hover;
+        position-visibility: anchors-visible;
+        left: anchor(left);
+        top: anchor(top);
+        width: anchor-size(width);
+        height: anchor-size(height);
+        border-radius: var(--ordo-hover-radius);
+        corner-shape: var(--corner-shape, round);
+        background-color: var(--ordo-hover-fill);
+        pointer-events: none;
+        z-index: -1;
+        transition: left var(--ordo-hover-motion) var(--ordo-ease),
+          top var(--ordo-hover-motion) var(--ordo-ease),
+          width var(--ordo-hover-motion) var(--ordo-ease),
+          height var(--ordo-hover-motion) var(--ordo-ease);
+      }
+
+      /* Rows retain native selection, focus, and controls. Only the hover
+         background moves to the shared surface. */
+      & :is(
+        .tree-item-self,
+        .nav-file-title,
+        .nav-folder-title,
+        .vertical-tab-nav-item,
+        .horizontal-tab-nav-item,
+        .workspace-tab-header,
+        .search-result-file-title,
+        .search-result-file-match,
+        .workspace-drawer-vault-switcher,
+        :is(.nav-buttons-container, .view-actions, .view-header-nav-buttons, .side-dock-actions, .side-dock-settings, .workspace-sidedock-vault-profile, .setting-item-control, .modal-button-container) .clickable-icon,
+        .status-bar-item:is(.mod-clickable, .plugin-editor-status, .plugin-sync),
+        :is(.setting-item-control, .modal-button-container) button:not(.mod-cta, .mod-warning)
+      ):not(.is-disabled, :disabled, [aria-disabled='true']) {
+        transition: var(--ordo-hover-row-transition);
+
+        &:hover {
+          anchor-name: --ordo-hover;
+          background-color: var(--ordo-nav-focused-fill, transparent);
+
+          &:is(.is-active, [aria-selected='true']) {
+            anchor-name: --ordo-selection, --ordo-active-tab, --ordo-hover;
+          }
+
+          &.tag-pane-tag.is-active {
+            background-color: color-mix(in srgb, var(--interactive-accent) 92%, var(--text-on-accent));
+          }
+
+          &.tree-item-self.is-selected {
+            background-color: color-mix(in srgb, var(--ordo-nav-focused-fill, var(--nav-item-background-selected)) 92%, var(--nav-item-color-selected));
+          }
+
+          /* Focus keeps its solid selection cue and gains a subtle tint. */
+          &.tree-item-self.has-focus:not(.is-being-renamed):where(.workspace-leaf.mod-active .nav-files-container *) {
+            background-color: color-mix(in srgb, var(--ordo-nav-focused-fill) 92%, var(--text-on-accent));
+          }
+
+          &.workspace-tab-header > .workspace-tab-header-inner {
+            background-color: transparent;
+          }
+        }
+      }
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-files-container,
+      .vertical-tab-header-group-container,
+      .setting-search-results,
+      .workspace-leaf-content:is([data-type='outline'], [data-type='bookmarks'], [data-type='all-properties']) .view-content,
+      .tag-container,
+      .backlink-pane,
+      .outgoing-link-pane
+    ) {
+      --ordo-hover-fill: var(--nav-item-background-hover);
+      --ordo-hover-radius: var(--nav-item-radius);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(.vertical-tab-header-group-container, .setting-search-results, .horizontal-tab-header):where(:not(.modal.mod-settings *)) {
+      --ordo-hover-radius: var(--radius-m);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) .workspace-tab-header-container-inner {
+      --ordo-hover-radius: var(--tab-radius);
+    }
+
+    body:not(.is-mobile):not(.is-grabbing) :is(
+      .nav-buttons-container,
+      .view-actions,
+      .view-header-nav-buttons,
+      .side-dock-actions,
+      .side-dock-settings,
+      .workspace-sidedock-vault-profile,
+      .setting-item-control,
+      .modal-button-container
+    ) {
+      --ordo-hover-fill: var(--ordo-c-bg-hover);
+      --ordo-hover-radius: var(--ordo-radius-s);
+    }
+
+    /* Picker options live in the browser's top layer. Their hover
+       surface must belong to the picker rather than its button. */
+    @supports (appearance: base-select) and selector(select::picker(select)) {
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) {
+        anchor-scope: --ordo-option-hover;
+        --ordo-option-row-transition: var(--ordo-transition);
+
+        &:open {
+          --ordo-option-row-transition: var(--ordo-transition),
+            anchor-name 0s calc(infinity * 1s) allow-discrete;
+        }
+
+        &:has(option:not(:disabled):hover) {
+          --ordo-option-row-transition: var(--ordo-transition);
+        }
+      }
+
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option {
+        transition: var(--ordo-option-row-transition);
+      }
+
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size])::picker(select) {
+        isolation: isolate;
+      }
+
+      /* One pseudo-element inside the picker serves all its options. */
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:first-of-type::before {
+        content: '';
+        position: absolute;
+        position-anchor: --ordo-option-hover;
+        position-visibility: anchors-visible;
+        left: anchor(left);
+        top: anchor(top);
+        width: anchor-size(width);
+        height: anchor-size(height);
+        border-radius: var(--ordo-radius-s);
+        corner-shape: var(--corner-shape, round);
+        background-color: var(--ordo-c-bg-hover);
+        pointer-events: none;
+        z-index: -1;
+        transition: left calc(var(--ordo-duration-normal) * 1.5) var(--ordo-ease),
+          top calc(var(--ordo-duration-normal) * 1.5) var(--ordo-ease),
+          width calc(var(--ordo-duration-normal) * 1.5) var(--ordo-ease),
+          height calc(var(--ordo-duration-normal) * 1.5) var(--ordo-ease);
+      }
+
+      body:not(.is-mobile) .modal.mod-settings select.dropdown:not([multiple]):not([size]) option:where(:not(:disabled)):hover {
+        anchor-name: --ordo-option-hover;
+        background-color: transparent;
+      }
+    }
+  }
+}
+
+.nav-file-tag {
+  padding-top: 0.2em;
+  background-color: transparent;
+  color: var(--ordo-c-text-3);
+}
+
+.nav-file:hover .nav-file-tag,
+.nav-file .is-active .nav-file-tag {
+  color: var(--ordo-c-text-2);
+}
+
+.outgoing-link-pane > .tree-item-self,
+.backlink-pane > .tree-item-self {
+  color: var(--ordo-c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--font-adaptive-smallest);
+  font-weight: 500;
+}
+
+/* ============================================================
+   11 · PLUGINS — Dataview, Kanban, Calendar, Style Settings,
+       Excalidraw, Charts, Sync
+   ============================================================ */
+
+/* --- Dataview --- */
+.dataview.table-view-table th {
+  font-weight: 400;
+  color: var(--ordo-c-text-2);
+  border-bottom: 1px solid var(--ordo-c-border-rest);
+}
+
+.dataview.table-view-table td {
+  max-width: 18em;
+}
+
+body:not(.row-hover) .table-view-table > tbody > tr:hover {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+body.row-hover .table-view-table > tbody > tr:hover {
+  background-color: var(--table-row-background-hover);
+}
+
+body .dataview.inline-field-key,
+body .dataview.inline-field-value,
+body .dataview .inline-field-standalone-value {
+  font-family: var(--font-text);
+  font-size: calc(var(--font-adaptive-normal) - 2px);
+  background: transparent;
+  color: var(--ordo-c-text-2);
+}
+
+body div.dataview-error-box {
+  min-height: 0;
+  border: none;
+  background-color: transparent;
+  border-radius: var(--ordo-radius-s);
+}
+
+/* --- Kanban --- */
+.kanban-plugin {
+  --kanban-border: var(--ordo-border-width);
+  background-color: var(--ordo-c-bg-surface);
+}
+
+.kanban-plugin__lane-items {
+  background: var(--ordo-c-bg-base);
+  border: var(--kanban-border) solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-s);
+}
+
+.kanban-plugin__item {
+  background: var(--ordo-c-bg-surface);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-s);
+}
+
+.kanban-plugin__item.is-dragging {
+  box-shadow: var(--ordo-shadow-focus);
+}
+
+.kanban-plugin__lane-header-wrapper {
+  background: var(--ordo-c-bg-elevated);
+  border-bottom: 1px solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-s) var(--ordo-radius-s) 0 0;
+}
+
+.kanban-plugin__lane-items > .kanban-plugin__placeholder:only-child {
+  border: var(--ordo-border-width) dashed var(--ordo-c-border-rest);
+  height: 2em;
+}
+
+.kanban-plugin button {
+  box-shadow: none;
+}
+
+.kanban-plugin__item-button-wrapper > button {
+  color: var(--ordo-c-text-2);
+  background: transparent;
+}
+
+.kanban-plugin__item-button-wrapper > button:hover {
+  color: var(--ordo-c-text-1);
+  background: var(--ordo-c-bg-hover);
+}
+
+/* --- Calendar --- */
+#calendar-container {
+  --color-background-day-empty: transparent;
+  --color-background-day-active: var(--ordo-c-bg-hover);
+  --color-background-day-hover: var(--ordo-c-bg-hover);
+  --color-dot: var(--calendar-dot-active);
+  --color-text-title: var(--ordo-c-text-1);
+  --color-text-heading: var(--ordo-c-text-2);
+  --color-text-day: var(--ordo-c-text-1);
+  --color-text-today: var(--ordo-c-text-1);
+  --color-arrow: var(--ordo-c-text-3);
+}
+
+#calendar-container .day {
+  border-radius: var(--ordo-radius-s);
+  border: var(--ordo-border-width) solid transparent;
+}
+
+#calendar-container .day:hover,
+#calendar-container .day.active {
+  background: var(--ordo-c-bg-hover);
+  border-color: var(--ordo-c-border-rest);
+}
+
+#calendar-container .today {
+  color: var(--ordo-c-text-1);
+  font-weight: 600;
+}
+
+/* --- Style Settings --- */
+.style-settings-container[data-level="2"] {
+  background: var(--ordo-c-bg-elevated);
+  border: var(--ordo-border-width) solid var(--ordo-c-border-rest);
+  border-radius: var(--ordo-radius-s);
+  padding: 10px 20px;
+}
+
+.setting-item .style-settings-import,
+.setting-item .style-settings-export {
+  text-decoration: none;
+  font-size: var(--font-ui-small);
+  font-weight: 500;
+  color: var(--ordo-c-text-2);
+  border-radius: var(--ordo-radius-s);
+}
+
+.setting-item .style-settings-import:hover,
+.setting-item .style-settings-export:hover {
+  background-color: var(--ordo-c-bg-hover);
+  color: var(--ordo-c-text-1);
+}
+
+/* LMath is neutralized: the plugin manages its own styling. */
+
+/* --- Excalidraw --- */
+.excalidraw.theme--dark {
+  --island-bg-color: var(--ordo-c-bg-elevated);
+}
+
+/* --- Charts --- */
+.block-language-chart canvas,
+.block-language-dataviewjs canvas {
+  margin: 1em 0;
+}
+
+/* --- Sync --- */
+.status-bar .sync-status-icon.mod-working,
+.status-bar .sync-status-icon.mod-success {
+  color: var(--ordo-c-text-3);
+}
+
+/* ============================================================
+   12 · RESPONSIVE — phone, tablet
+   ============================================================ */
+
+.is-phone {
+  --ordo-gutter: 8px;
+  --ordo-radius-m: 10px;
+  --ordo-radius-l: 14px;
+
+  --metadata-label-font-size: var(--font-adaptive-smaller);
+  --metadata-input-font-size: var(--font-adaptive-smaller);
+}
+
+/* On mobile, the note uses the full native surface. Desktop cards
+   do not add borders or margins to touch navigation. */
+.is-mobile .workspace-tab-container {
+  margin: 0;
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.is-mobile .workspace-leaf,
+.is-mobile .view-header {
+  border-radius: 0;
+}
+
+.is-mobile .view-header {
+  border-bottom: 0;
+}
+
+/* The explorer gradient also covers its horizontal edges. */
+.is-mobile.is-floating-nav .workspace-drawer .workspace-leaf-content::after,
+.is-mobile.is-floating-nav .workspace-drawer .nav-buttons-container::after {
+  width: 100%;
+  margin: 0;
+}
+
+.is-mobile .modal-container .modal {
+  border-radius: var(--modal-radius);
+  border-width: var(--modal-border-width);
+}
+
+.is-phone .markdown-preview-view pre {
+  padding: 0.75rem 1rem;
+}
+
+@media (max-width: 400pt) {
+  .cards,
+  body {
+    --ordo-gutter: 8px;
+  }
+
+}
+
+/* ============================================================
+   13 · ACCESSIBILITY — reduced motion, focus, high contrast
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
+  }
+}
+
+body.fast-animations {
+  --ordo-duration-normal: 80ms;
+}
+
+body.disable-animations {
+  --ordo-duration-normal: 0ms;
+}
+
+body.disable-animations *,
+body.disable-animations *::before,
+body.disable-animations *::after {
+  transition-duration: 0ms;
+  animation-duration: 0ms;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ordo-c-border-focus);
+  outline-offset: 2px;
+}
+
+.workspace-tab-header:focus-visible,
+.nav-file-title:focus-visible,
+.nav-folder-title:focus-visible,
+.clickable-icon:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ordo-c-border-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-contrast: more) {
+  body {
+    --ordo-border-rest: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 20%));
+    --ordo-border-focus: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l) + 55%));
+    --ordo-image-dim: 1;
+  }
+
+  .theme-light {
+    --ordo-border-rest: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 14%));
+    --ordo-border-focus: hsl(var(--ordo-h), var(--ordo-s), calc(var(--ordo-l-light) - 45%));
+  }
+}
+
+/* ============================================================
+   14 · SCROLLBARS
+   ============================================================ */
+
+body.styled-scrollbar {
+  --scrollbar-active-thumb-bg: var(--ordo-c-border-focus);
+  --scrollbar-bg: transparent;
+  --scrollbar-thumb-bg: var(--ordo-c-border-rest);
+}
+
+/* ============================================================
+   15 · PRINT
+   ============================================================ */
+
+@media print {
+  body {
+    --ordo-bg-0: white;
+    --ordo-bg-1: white;
+    --ordo-bg-2: #f5f5f5;
+    --ordo-border-rest: #ddd;
+    --ordo-border-focus: #999;
+    --ordo-text-1: #1a1a1c;
+    --ordo-text-2: #444;
+    --ordo-text-3: #666;
+    --ordo-shadow-rest: none;
+    --ordo-shadow-focus: none;
+    --ordo-shadow-ink: transparent;
+    --code-background: #eeeeee;
+  }
+
+  .workspace-tab-container,
+  .workspace-sidedock-vault-profile,
+  .workspace-leaf-content {
+    box-shadow: none;
+    border: 1px solid var(--ordo-border-rest);
+  }
+
+  .markdown-rendered pre,
+  .markdown-preview-view pre {
+    background: var(--code-background);
+    border: 1px solid var(--ordo-border-rest);
+  }
+
+  .markdown-rendered code,
+  .markdown-preview-view code {
+    background: var(--code-background);
+    border: 1px solid var(--ordo-border-rest);
+  }
+}
+
+/* ============================================================
+   16 · USER HELPERS
+   ============================================================ */
+
+body.wide,
+.wide {
+  --ordo-width-scale: 1.125;
+}
+
+body.max .markdown-source-view,
+body.max .markdown-preview-view,
+.max .markdown-source-view,
+.max .markdown-preview-view,
+.markdown-source-view.max,
+.markdown-preview-view.max {
+  --file-line-width: var(--ordo-max-width);
+}
+
+.table-lines {
+  --table-edge-cell-padding-first: 8px;
+  --table-edge-cell-padding-last: 8px;
+}
+
+.row-alt {
+  --table-row-alt-background: var(--ordo-c-bg-elevated);
+  --table-row-alt-background-hover: var(--ordo-c-bg-elevated);
+}
+
+.row-hover {
+  --table-row-background-hover: var(--ordo-c-bg-hover);
+  --table-row-alt-background-hover: var(--ordo-c-bg-hover);
+}
+
+.row-lines-off .markdown-preview-view tr:nth-child(even) td,
+.row-lines-off.markdown-preview-view tr:nth-child(even) td {
+  background: transparent;
+}
+
+.table-numbers table:not(.calendar) {
+  counter-reset: ordo-row;
+}
+
+.table-numbers table:not(.calendar) > tbody > tr > td:first-child::before {
+  counter-increment: ordo-row;
+  content: counter(ordo-row) " ";
+  display: inline-block;
+  min-width: 2em;
+  padding-right: 0.5em;
+  color: var(--ordo-c-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular,
+.table-tabular table:not(.calendar) {
+  font-variant-numeric: tabular-nums;
+}
+
+.full-width-media img,
+.full-width-media video,
+.full-width-media .image-embed img {
+  width: 100%;
+}
+
+.checkbox-square {
+  --checkbox-radius: 4px;
+  --checkbox-top: 1px;
+  --checkbox-margin: 0px 8px 0px -2em;
+}
+
+/* ============================================================
+   17 · STYLE SETTINGS — customization panel
+   ============================================================ */
+
+/* @settings
+
+name: Ordo Test
+id: ordo-test-style
+settings:
+  -
+    id: ordo-help
+    title: Ordo Test
+    type: heading
+    level: 2
+    collapsed: false
+    description: Complete token system. Dark and light grays with uniform backgrounds and progressive focus on borders and shadows.
+  -
+    id: base-colors
+    title: Base colors
+    type: heading
+    level: 2
+    collapsed: true
+  -
+    id: ordo-h
+    title: Hue
+    description: Cool tint across the grayscale palette. The original hue is 240.
+    type: variable-number-slider
+    default: 240
+    min: 180
+    max: 300
+    step: 5
+  -
+    id: ordo-s
+    title: Base saturation
+    description: 0% produces neutral gray. The original saturation is 6.
+    type: variable-number-slider
+    default: 6
+    min: 0
+    max: 14
+    step: 1
+    format: '%'
+  -
+    id: ordo-l
+    title: Background lightness (dark)
+    type: variable-number-slider
+    default: 10.5
+    min: 6
+    max: 18
+    step: 0.5
+    format: '%'
+  -
+    id: ordo-l-light
+    title: Background lightness (light)
+    type: variable-number-slider
+    default: 74
+    min: 68
+    max: 86
+    step: 0.5
+    format: '%'
+  -
+    id: ordo-red
+    title: Red
+    type: variable-themed-color
+    format: hex
+    default-light: '#a85252'
+    default-dark: '#c98181'
+  -
+    id: ordo-orange
+    title: Orange
+    type: variable-themed-color
+    format: hex
+    default-light: '#a86b3d'
+    default-dark: '#c99a6b'
+  -
+    id: ordo-yellow
+    title: Yellow
+    type: variable-themed-color
+    format: hex
+    default-light: '#8a7526'
+    default-dark: '#c2b071'
+  -
+    id: ordo-green
+    title: Green
+    type: variable-themed-color
+    format: hex
+    default-light: '#5c8a5c'
+    default-dark: '#83ae83'
+  -
+    id: ordo-cyan
+    title: Cyan
+    type: variable-themed-color
+    format: hex
+    default-light: '#3f8a8a'
+    default-dark: '#6fadad'
+  -
+    id: ordo-blue
+    title: Blue
+    type: variable-themed-color
+    format: hex
+    default-light: '#55719e'
+    default-dark: '#8098bd'
+  -
+    id: ordo-purple
+    title: Purple
+    type: variable-themed-color
+    format: hex
+    default-light: '#7563a0'
+    default-dark: '#9d8bbd'
+  -
+    id: ordo-pink
+    title: Pink
+    type: variable-themed-color
+    format: hex
+    default-light: '#9e5578'
+    default-dark: '#bd84a5'
+  -
+    id: attenuation
+    title: Dimming and focus
+    type: heading
+    level: 2
+    collapsed: true
+  -
+    id: ordo-image-dim
+    title: Image dimming (dark)
+    type: variable-number-slider
+    default: 0.78
+    min: 0.4
+    max: 1
+    step: 0.02
+  -
+    id: ordo-duration-normal
+    title: Transition duration
+    type: variable-number-slider
+    default: 150
+    min: 0
+    max: 400
+    step: 10
+    format: ms
+  -
+    id: geometry
+    title: Geometry
+    type: heading
+    level: 2
+    collapsed: true
+  -
+    id: ordo-radius-s
+    title: Small radius
+    type: variable-number-slider
+    default: 8
+    min: 0
+    max: 16
+    step: 1
+    format: px
+  -
+    id: ordo-radius-m
+    title: Medium radius
+    type: variable-number-slider
+    default: 12
+    min: 0
+    max: 24
+    step: 1
+    format: px
+  -
+    id: ordo-radius-l
+    title: Large radius
+    type: variable-number-slider
+    default: 18
+    min: 0
+    max: 30
+    step: 1
+    format: px
+  -
+    id: ordo-gutter
+    title: Panel spacing
+    type: variable-number-slider
+    default: 14
+    min: 0
+    max: 28
+    step: 1
+    format: px
+  -
+    id: typography
+    title: Typography
+    type: heading
+    level: 2
+    collapsed: true
+  -
+    id: ordo-font-ui
+    title: Interface font
+    type: variable-text
+    default: ''
+  -
+    id: ordo-font-text
+    title: Text font
+    type: variable-text
+    default: ''
+  -
+    id: ordo-font-mono
+    title: Monospace font
+    type: variable-text
+    default: ''
+  -
+    id: ordo-line-height
+    title: Line height
+    type: variable-number-slider
+    default: 1.5
+    min: 1.2
+    max: 2
+    step: 0.05
+  -
+    id: ordo-p-spacing
+    title: Paragraph spacing
+    type: variable-text
+    default: 1rem
+  -
+    id: ordo-heading-spacing
+    title: Heading spacing
+    type: variable-text
+    default: calc(var(--ordo-p-spacing) * 2.5)
+  -
+    id: headings
+    title: Headings
+    type: heading
+    level: 3
+    collapsed: true
+  -
+    id: h1-size
+    title: H1 size
+    type: variable-text
+    default: 1.618em
+  -
+    id: h2-size
+    title: H2 size
+    type: variable-text
+    default: 1.462em
+  -
+    id: h3-size
+    title: H3 size
+    type: variable-text
+    default: 1.318em
+  -
+    id: h4-size
+    title: H4 size
+    type: variable-text
+    default: 1.188em
+  -
+    id: h5-size
+    title: H5 size
+    type: variable-text
+    default: 1.076em
+  -
+    id: h6-size
+    title: H6 size
+    type: variable-text
+    default: 1em
+  -
+    id: inline-title-size
+    title: Inline title size
+    type: variable-text
+    default: var(--h1-size)
+  -
+    id: layout
+    title: Reading width
+    type: heading
+    level: 2
+    collapsed: true
+  -
+    id: ordo-line-width
+    title: Line width
+    description: 700px, matching the default theme. Use px to keep the column width fixed when text size changes.
+    type: variable-text
+    default: 700px
+  -
+    id: ordo-max-width
+    title: Maximum width
+    description: Width used when Global maximum width or the max class is enabled.
+    type: variable-text
+    default: 100%
+  -
+    id: features
+    title: Components and extras
+    type: heading
+    level: 2
+    collapsed: true
+  -
+    id: wide
+    title: Global wide layout
+    type: class-toggle
+    default: false
+  -
+    id: max
+    title: Global maximum width
+    type: class-toggle
+    default: false
+  -
+    id: row-alt
+    title: Alternating table rows
+    type: class-toggle
+    default: false
+  -
+    id: row-hover
+    title: Highlight table rows on hover
+    type: class-toggle
+    default: false
+  -
+    id: full-width-media
+    title: Full-width images
+    type: class-toggle
+    default: false
+  -
+    id: disable-animations
+    title: Disable animations
+    type: class-toggle
+    default: false
+  -
+    id: fast-animations
+    title: Fast animations
+    type: class-toggle
+    default: false
+
+*/
